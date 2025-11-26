@@ -24,11 +24,9 @@ public class TeachMain extends JFrame {
     private final Font buttonFont = new Font("Malgun Gothic", Font.PLAIN, 12);
     private final Font addButtonFont = new Font("Malgun Gothic", Font.BOLD, 14);
 
-    // [필드] 테이블 모델
     private DefaultTableModel teacherTableModel;
     private final int PRICE_COLUMN_INDEX = 5;
 
-    // [필드] 원장 정보
     private String managerId = "qwerqwer";
     private String managerName = "남궁현";
     private String managerJob = "원장";
@@ -77,7 +75,6 @@ public class TeachMain extends JFrame {
         setVisible(true);
     }
 
-    // --- 헬퍼 메소드 ---
 
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -95,7 +92,7 @@ public class TeachMain extends JFrame {
         logoutButton.setContentAreaFilled(false);
         logoutButton.setForeground(Color.GRAY);
 
-        // [수정] 로그아웃 버튼 클릭 시 Login 창으로 이동
+        //로그아웃 버튼 클릭 시 Login 창으로 이동
         logoutButton.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "로그아웃 되었습니다.", "알림", JOptionPane.INFORMATION_MESSAGE);
             new Login().setVisible(true); // Login 창 열기
@@ -236,7 +233,7 @@ public class TeachMain extends JFrame {
             String newAddress = addressField.getText().trim();
 
             try {
-                // 🚨 [예외 처리] 필수 필드 및 형식 검사
+                //필수 필드 및 형식 검사
                 if (newName.isEmpty()) {
                     throw new IllegalArgumentException("이름은 필수 입력 항목입니다.");
                 }
@@ -247,13 +244,12 @@ public class TeachMain extends JFrame {
                     throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
                 }
 
-                // [업데이트] 필드 값 업데이트
+                //필드 값 업데이트
                 managerName = newName;
                 managerPhone = newPhone;
                 managerEmail = newEmail;
                 managerAddress = newAddress;
 
-                // [화면 갱신]
                 revalidate();
                 repaint();
 
@@ -311,9 +307,9 @@ public class TeachMain extends JFrame {
         panel.setMaximumSize(new Dimension(FRAME_WIDTH, 40));
         panel.setBackground(Color.WHITE);
 
-        JButton lectureTab = createTabButton("📖 강의 관리");
-        JButton teacherTab = createTabButton("👨‍🏫 강사 관리");
-        JButton studentTab = createTabButton("🎓 학생 관리");
+        JButton lectureTab = createTabButton("강의 관리");
+        JButton teacherTab = createTabButton("강사 관리");
+        JButton studentTab = createTabButton("학생 관리");
 
         teacherTab.setBackground(new Color(230, 230, 230));
         teacherTab.setBorder(BorderFactory.createMatteBorder(0, 0, 3, 0, Color.BLACK));
@@ -559,7 +555,7 @@ public class TeachMain extends JFrame {
                     String newAddress = addressField.getText().trim();
 
                     try {
-                        // 🚨 [예외 처리] 강사 정보 형식 검사
+                        //강사 정보 형식 검사
                         if (newName.isEmpty()) {
                             throw new IllegalArgumentException("이름은 필수 입력 항목입니다.");
                         }
@@ -570,7 +566,7 @@ public class TeachMain extends JFrame {
                             throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
                         }
 
-                        // **[데이터 저장 로직]** 변경된 내용을 테이블 모델에 반영
+                        //변경된 내용을 테이블 모델에 반영
                         outerFrame.teacherTableModel.setValueAt(newName, selectedRow, 1);
                         outerFrame.teacherTableModel.setValueAt(newEmail, selectedRow, 2);
                         outerFrame.teacherTableModel.setValueAt(newPhone, selectedRow, 3);
