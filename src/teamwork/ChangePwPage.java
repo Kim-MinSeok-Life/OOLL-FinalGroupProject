@@ -50,9 +50,6 @@ public class ChangePwPage extends JFrame {
         setVisible(true);
     }
 
-    // =========================================================
-    // 1단계: 본인 확인 패널 (AUTH)
-    // =========================================================
 
     private JPanel createAuthPanel() {
         JPanel mainPanel = new JPanel();
@@ -244,9 +241,9 @@ public class ChangePwPage extends JFrame {
             return;
         }
 
-        // **********************************************
-        // [핵심 로직]: 실제 DB의 비밀번호 변경 로직이 실행되어야 합니다.
-        // **********************************************
+ 
+        // [핵심 로직]: 실제 DB의 비밀번호 변경 로직이 실행
+   
 
         JOptionPane.showMessageDialog(this, "비밀번호가 성공적으로 변경되었습니다.", "변경 완료", JOptionPane.INFORMATION_MESSAGE);
 
