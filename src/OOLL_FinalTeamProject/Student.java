@@ -196,7 +196,7 @@ public class Student extends JFrame {
         });
     }
 
-    // ---------- DB 연결 ----------
+    // DB 연결
     private Connection getConnection() {
         Connection conn = null;
         try {
@@ -210,7 +210,7 @@ public class Student extends JFrame {
         return conn;
     }
 
-    // ---------- 개인정보 + student_no 얻어오기 ----------
+    // 개인정보 + student_no 얻어오기
     private void loadStudentInfo(String memberId) {
         String sql = "SELECT m.member_id, m.name, m.email, m.phone, m.address, s.student_no " +
                      "FROM member m LEFT JOIN student s ON m.member_id = s.member_id WHERE m.member_id = ?";
@@ -235,7 +235,7 @@ public class Student extends JFrame {
         }
     }
 
-    // ---------- 내 강의 로드 ----------
+    // 내 강의 읽어오기
     private void loadMyClass() {
         modelMyClass.setRowCount(0);
         if (currentStudentNo == -1) return;
@@ -261,7 +261,7 @@ public class Student extends JFrame {
         } catch (SQLException ex) { ex.printStackTrace(); }
     }
 
-    // ---------- 수강신청 목록 로드 (검색 + 정렬) ----------
+    // 수강신청 목록 로드 (검색 + 정렬)
     private void loadCourseList(String keyword, String sortOption) {
         modelCourse.setRowCount(0);
         String base = "SELECT l.subject_name, l.enrolled_count, m.name as teacher_name, l.lecture_no, l.day_of_week, l.start_period, l.end_period, l.classroom_name, l.capacity " +
@@ -296,7 +296,7 @@ public class Student extends JFrame {
         } catch (SQLException ex) { ex.printStackTrace(); }
     }
 
-    // ---------- 수강신청 시도 (정원/중복/시간 충돌 확인 포함) ----------
+    // 수강신청 시도 (정원/중복/시간 충돌 확인 포함)
     private void attemptEnroll(int lectureNo) {
         if (currentStudentNo == -1) {
             JOptionPane.showMessageDialog(this, "학생 정보가 없습니다. 먼저 회원-학생 연계를 확인하세요.");
