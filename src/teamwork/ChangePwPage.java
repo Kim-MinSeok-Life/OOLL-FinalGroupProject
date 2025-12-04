@@ -222,7 +222,7 @@ public class ChangePwPage extends JFrame {
         return changePanel;
     }
 
-    /** 2단계: 비밀번호 변경 시도 로직 */
+    //비밀번호 변경 시도 로직
     private void attemptPasswordChange() {
         char[] newPwChars = newPasswordField.getPassword();
         char[] confirmPwChars = confirmPasswordField.getPassword();
@@ -243,7 +243,7 @@ public class ChangePwPage extends JFrame {
         }
 
  
-        // [핵심 로직]: 실제 DB의 비밀번호 변경 로직이 실행
+        //실제 DB의 비밀번호 변경 로직이 실행
    
 
         JOptionPane.showMessageDialog(this, "비밀번호가 성공적으로 변경되었습니다.", "변경 완료", JOptionPane.INFORMATION_MESSAGE);
@@ -255,17 +255,9 @@ public class ChangePwPage extends JFrame {
         // 변경 후 로그인 화면으로 돌아가기
         backToLogin();
     }
-
-    /** 로그인 화면으로 돌아가기 로직 */
     private void backToLogin() {
         // FindIdPage에서 Login.java로 돌아올 때도 사용되므로 클래스 이름만 사용
         new Login().setVisible(true);
         dispose();
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new ChangePwPage();
-        });
     }
 }
