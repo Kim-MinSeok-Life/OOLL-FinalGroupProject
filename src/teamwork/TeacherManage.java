@@ -8,11 +8,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.regex.Pattern;
-import java.util.Arrays;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class TeachMain extends JFrame {
+public class TeacherManage extends JFrame {
 
     private static final int FRAME_WIDTH = 850;
     private static final int FRAME_HEIGHT = 700;
@@ -40,7 +39,7 @@ public class TeachMain extends JFrame {
     private String managerPassword = "1234";
 
 
-    public TeachMain() {
+    public TeacherManage() {
         // 프레임 기본 설정
         setTitle("학원 관리 시스템");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -560,10 +559,10 @@ public class TeachMain extends JFrame {
     class ButtonEditor extends DefaultCellEditor {
         private final JButton button;
         private String label;
-        private TeachMain outerFrame;
+        private TeacherManage outerFrame;
         private JTable currentTable;
 
-        public ButtonEditor(JTextField textField, TeachMain frame) {
+        public ButtonEditor(JTextField textField, TeacherManage frame) {
             super(textField);
             this.outerFrame = frame;
             button = new JButton();
@@ -692,7 +691,7 @@ public class TeachMain extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new TeachMain();
+            new TeacherManage();
         });
     }
 }
