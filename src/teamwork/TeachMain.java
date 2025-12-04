@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.regex.Pattern;
+import java.util.Arrays;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -24,16 +25,19 @@ public class TeachMain extends JFrame {
     private final Font buttonFont = new Font("Malgun Gothic", Font.PLAIN, 12);
     private final Font addButtonFont = new Font("Malgun Gothic", Font.BOLD, 14);
 
+    // [필드] 테이블 모델
     private DefaultTableModel teacherTableModel;
     private final int PRICE_COLUMN_INDEX = 5;
 
+    // [필드] 원장 정보
     private String managerId = "qwerqwer";
     private String managerName = "남궁현";
     private String managerJob = "원장";
     private String managerPhone = "01012364567";
     private String managerEmail = "qwer1234@naver.com";
     private String managerAddress = "경기도 수원";
-    private String managerJoinDate = "2025. 11. 8.";
+    // [추가] 원장 비밀번호 (더미 데이터)
+    private String managerPassword = "1234";
 
 
     public TeachMain() {
@@ -75,6 +79,7 @@ public class TeachMain extends JFrame {
         setVisible(true);
     }
 
+    // --- 헬퍼 메소드 ---
 
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -85,7 +90,7 @@ public class TeachMain extends JFrame {
         title.setFont(titleFont);
         panel.add(title, BorderLayout.WEST);
 
-        JButton logoutButton = new JButton("로그아웃 →");
+        JButton logoutButton = new JButton("로그아웃 ->");
         logoutButton.setFont(dataFont);
         logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         logoutButton.setBorderPainted(false);
@@ -95,8 +100,8 @@ public class TeachMain extends JFrame {
         //로그아웃 버튼 클릭 시 Login 창으로 이동
         logoutButton.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "로그아웃 되었습니다.", "알림", JOptionPane.INFORMATION_MESSAGE);
-            new Login().setVisible(true); // Login 창 열기
-            dispose(); // 현재 TeachMain 창 닫기
+            // new Login().setVisible(true); // Login 창 열기
+            dispose(); //TeachMain 닫기
         });
         panel.add(logoutButton, BorderLayout.EAST);
 
@@ -121,7 +126,7 @@ public class TeachMain extends JFrame {
         dataContainer.setBackground(Color.WHITE);
 
         // 1. 제목 영역
-        JLabel title = new JLabel("👤 원장 정보");
+        JLabel title = new JLabel("원장 정보");
         title.setFont(sectionTitleFont);
         dataContainer.add(title);
 
@@ -139,8 +144,8 @@ public class TeachMain extends JFrame {
         gbc.anchor = GridBagConstraints.WEST;
 
         // 데이터 배열 (필드 사용)
-        String[] labels = {"아이디", "이름", "직책", "전화번호", "이메일", "주소", "가입일"};
-        String[] data = {managerId, managerName, managerJob, managerPhone, managerEmail, managerAddress, managerJoinDate};
+        String[] labels = {"아이디", "이름", "직책", "전화번호", "이메일", "주소"};
+        String[] data = {managerId, managerName, managerJob, managerPhone, managerEmail, managerAddress};
 
         int cols = 3;
         for (int i = 0; i < data.length; i++) {
@@ -181,7 +186,6 @@ public class TeachMain extends JFrame {
         return infoSection;
     }
 
-    /** 원장 정보 수정 팝업 및 로직 */
     private void editManagerInfo() {
         // 입력 필드 생성 및 현재 값 설정
         JTextField nameField = new JTextField(managerName, 15);
@@ -189,9 +193,16 @@ public class TeachMain extends JFrame {
         JTextField emailField = new JTextField(managerEmail, 15);
         JTextField addressField = new JTextField(managerAddress, 15);
 
-        // 아이디와 직책은 수정 불가
+        // 수정 불가 필드
         JLabel idLabel = new JLabel(managerId);
         JLabel jobLabel = new JLabel(managerJob);
+
+        //비밀번호 변경 버튼
+        JButton pwChangeButton = new JButton("비밀번호 변경");
+        pwChangeButton.setFont(dataFont);
+        pwChangeButton.setFocusPainted(false);
+        pwChangeButton.addActionListener(e -> showPasswordChangeDialog());
+
 
         JPanel inputPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -222,6 +233,13 @@ public class TeachMain extends JFrame {
         gbc.gridx = 0; gbc.gridy = 5; inputPanel.add(new JLabel("주소:"), gbc);
         gbc.gridx = 1; inputPanel.add(addressField, gbc);
 
+        // [추가] 비밀번호 변경 버튼 배치
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2; // 두 칸 차지
+        gbc.fill = GridBagConstraints.NONE; // 가득 채우지 않음
+        gbc.anchor = GridBagConstraints.EAST; // 오른쪽 정렬
+        gbc.insets = new Insets(15, 5, 0, 5);
+        inputPanel.add(pwChangeButton, gbc);
+
 
         int result = JOptionPane.showConfirmDialog(this, inputPanel,
                 "원장 정보 수정", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -233,23 +251,24 @@ public class TeachMain extends JFrame {
             String newAddress = addressField.getText().trim();
 
             try {
-                //필수 필드 및 형식 검사
+                // 필수 필드 및 형식 검사
                 if (newName.isEmpty()) {
                     throw new IllegalArgumentException("이름은 필수 입력 항목입니다.");
                 }
-                if (!Pattern.matches("^010-\\d{4}-\\d{4}$", newPhone)) {
-                    throw new IllegalArgumentException("유효하지 않은 전화번호 형식입니다. (예: 010-1234-5678)");
+                if (!Pattern.matches("^010\\d{8}$", newPhone.replaceAll("-", ""))) {
+                    throw new IllegalArgumentException("유효하지 않은 전화번호 형식입니다. (예: 01012345678)");
                 }
                 if (!Pattern.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,4}$", newEmail)) {
                     throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
                 }
 
-                //필드 값 업데이트
+                // [업데이트] 필드 값 업데이트
                 managerName = newName;
                 managerPhone = newPhone;
                 managerEmail = newEmail;
                 managerAddress = newAddress;
 
+                // [화면 갱신]
                 revalidate();
                 repaint();
 
@@ -261,6 +280,87 @@ public class TeachMain extends JFrame {
                 // 실제 DB 오류 등 시스템 예외 처리
                 JOptionPane.showMessageDialog(this, "정보 수정 중 서버 오류 발생: " + ex.getMessage(), "시스템 오류", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    /** 비밀번호 변경 팝업 로직 */
+    private void showPasswordChangeDialog() {
+
+        // 1. 현재 비밀번호 인증 입력 필드
+        JPasswordField currentPwField = new JPasswordField(15);
+
+        JPanel authPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 5, 5, 5);
+
+        gbc.gridx = 0; gbc.gridy = 0; authPanel.add(new JLabel("현재 비밀번호:"), gbc);
+        gbc.gridx = 1; authPanel.add(currentPwField, gbc);
+
+        int authResult = JOptionPane.showConfirmDialog(this, authPanel,
+                "비밀번호 변경 (1단계: 인증)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (authResult != JOptionPane.OK_OPTION) {
+            // Arrays.fill(currentPwField.getPassword(), '0'); // JDBC import가 없으므로 생략
+            return;
+        }
+
+        char[] currentPwChars = currentPwField.getPassword();
+        String enteredCurrentPw = new String(currentPwChars);
+        // Arrays.fill(currentPwChars, '0'); // 메모리 삭제 생략
+
+        // [인증 로직] 현재 비밀번호 확인 (더미 데이터 사용)
+        if (!enteredCurrentPw.equals(managerPassword)) {
+            JOptionPane.showMessageDialog(this, "현재 비밀번호가 일치하지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // 2. 새 비밀번호 입력 필드
+        JPasswordField newPwField = new JPasswordField(15);
+        JPasswordField confirmNewPwField = new JPasswordField(15);
+
+        JPanel newPwPanel = new JPanel(new GridBagLayout());
+        gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 5, 5, 5);
+
+        gbc.gridx = 0; gbc.gridy = 0; newPwPanel.add(new JLabel("새 비밀번호:"), gbc);
+        gbc.gridx = 1; newPwPanel.add(newPwField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1; newPwPanel.add(new JLabel("새 비밀번호 확인:"), gbc);
+        gbc.gridx = 1; newPwPanel.add(confirmNewPwField, gbc);
+
+        int newPwResult = JOptionPane.showConfirmDialog(this, newPwPanel,
+                "비밀번호 변경 (2단계: 변경)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (newPwResult == JOptionPane.OK_OPTION) {
+            char[] newPwChars = newPwField.getPassword();
+            char[] confirmNewPwChars = confirmNewPwField.getPassword();
+            String newPw = new String(newPwChars);
+            String confirmNewPw = new String(confirmNewPwChars);
+
+            try {
+                // [예외 처리] 새 비밀번호 유효성 검사
+                if (!newPw.equals(confirmNewPw)) {
+                    throw new IllegalArgumentException("새 비밀번호와 확인이 일치하지 않습니다.");
+                }
+
+                //비밀번호 업데이트
+                managerPassword = newPw;
+
+                JOptionPane.showMessageDialog(this, "비밀번호가 성공적으로 변경되었습니다.", "변경 완료", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "입력 오류", JOptionPane.WARNING_MESSAGE);
+            } finally {
+                // 메모리 삭제 (JDBC import가 없으므로 생략)
+                // Arrays.fill(newPwChars, '0');
+                // Arrays.fill(confirmNewPwChars, '0');
+            }
+        } else {
+            // 메모리 삭제 (JDBC import가 없으므로 생략)
+            // Arrays.fill(newPwField.getPassword(), '0');
+            // Arrays.fill(confirmNewPwField.getPassword(), '0');
         }
     }
 
@@ -281,9 +381,9 @@ public class TeachMain extends JFrame {
         updatePriceButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         updatePriceButton.addActionListener(e -> updateAllPrices());
 
-        // [추가] 단가 일괄 수정 버튼 마우스 오버 효과
-        Color originalColor = new Color(255, 165, 0); // 주황색
-        Color hoverColor = new Color(255, 185, 50); // 밝은 주황색
+        // 단가 일괄 수정 버튼 마우스 오버 효과
+        Color originalColor = new Color(255, 165, 0);
+        Color hoverColor = new Color(255, 185, 50);
 
         updatePriceButton.addMouseListener(new MouseAdapter() {
             @Override
@@ -400,7 +500,7 @@ public class TeachMain extends JFrame {
                 return;
             }
 
-            String newPriceFormatted = newPriceStr + "원";
+            String newPriceFormatted = String.format("%,d원", Integer.parseInt(newPriceStr));
 
             for (int i = 0; i < teacherTableModel.getRowCount(); i++) {
                 teacherTableModel.setValueAt(newPriceFormatted, i, PRICE_COLUMN_INDEX);
@@ -425,10 +525,10 @@ public class TeachMain extends JFrame {
             button.setForeground(Color.BLACK);
             button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
-            // [추가] 마우스 이벤트 처리 (Hover Effect)
+            // 마우스 이벤트 처리 (Hover Effect)
             button.addMouseListener(new MouseAdapter() {
                 private final Color originalColor = Color.WHITE;
-                private final Color hoverColor = new Color(240, 240, 240); // 마우스 오버 시 밝은 회색
+                private final Color hoverColor = new Color(240, 240, 240);
 
                 @Override
                 public void mouseEntered(MouseEvent e) {
@@ -462,7 +562,6 @@ public class TeachMain extends JFrame {
     class ButtonEditor extends DefaultCellEditor {
         private final JButton button;
         private String label;
-        private boolean isPushed;
         private TeachMain outerFrame;
         private JTable currentTable;
 
@@ -472,15 +571,17 @@ public class TeachMain extends JFrame {
             button = new JButton();
             button.setOpaque(true);
 
-            // [수정] 버튼 클릭 시 이벤트 처리: fireEditingStopped() 호출 없이 바로 액션 실행
-            button.addActionListener(e -> {
-                // 편집이 끝났음을 알리기 전에 데이터를 저장해야 합니다.
-                // 그러나 데이터가 변경되지 않으므로, 바로 액션 실행.
-                if (currentTable != null) {
-                    handleEditAction(currentTable);
+            // [수정] 버튼 클릭 시 이벤트 처리
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // 1. 수정 팝업 로직 실행
+                    if (currentTable != null) {
+                        handleEditAction(currentTable);
+                    }
+                    // 2. 편집이 끝났음을 알림
+                    fireEditingStopped();
                 }
-                // *필수* 에디터가 끝났음을 알립니다. (이게 없으면 다음 셀 선택 시 문제가 생길 수 있습니다.)
-                fireEditingStopped();
             });
         }
 
@@ -501,12 +602,10 @@ public class TeachMain extends JFrame {
             button.setFont(buttonFont);
             button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
             button.setPreferredSize(new Dimension(60, 20));
-            isPushed = true;
             return button;
         }
 
         private void handleEditAction(JTable table) {
-            // 현재 편집 중인 행의 인덱스를 가져옵니다.
             int selectedRow = table.getEditingRow();
 
             if (selectedRow >= 0) {
@@ -555,7 +654,7 @@ public class TeachMain extends JFrame {
                     String newAddress = addressField.getText().trim();
 
                     try {
-                        //강사 정보 형식 검사
+                        // [예외 처리] 강사 정보 형식 검사
                         if (newName.isEmpty()) {
                             throw new IllegalArgumentException("이름은 필수 입력 항목입니다.");
                         }
@@ -566,7 +665,7 @@ public class TeachMain extends JFrame {
                             throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
                         }
 
-                        //변경된 내용을 테이블 모델에 반영
+                        // [데이터 저장 로직] 변경된 내용을 테이블 모델에 반영
                         outerFrame.teacherTableModel.setValueAt(newName, selectedRow, 1);
                         outerFrame.teacherTableModel.setValueAt(newEmail, selectedRow, 2);
                         outerFrame.teacherTableModel.setValueAt(newPhone, selectedRow, 3);
@@ -589,7 +688,6 @@ public class TeachMain extends JFrame {
 
         @Override
         public Object getCellEditorValue() {
-            isPushed = false;
             return label;
         }
     }

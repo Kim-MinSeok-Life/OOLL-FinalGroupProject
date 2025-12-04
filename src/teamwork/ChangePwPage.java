@@ -57,6 +57,7 @@ public class ChangePwPage extends JFrame {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
         GridBagConstraints gbc = new GridBagConstraints();
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(8, 0, 8, 0);
         gbc.gridx = 0;

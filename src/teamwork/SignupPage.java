@@ -36,6 +36,7 @@ public class SignupPage extends JFrame {
     public SignupPage() {
         // 프레임 기본 설정
         setTitle("학원 관리 시스템 회원가입");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setLocationRelativeTo(null);
