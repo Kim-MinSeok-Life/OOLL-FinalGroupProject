@@ -78,6 +78,24 @@ public class ManagerMainFrame extends JFrame {
         JButton editBtn = createStyledButton("개인정보 수정");
         JButton logoutBtn = createStyledButton("로그아웃");
 
+        // 로그아웃
+        logoutBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "정말 로그아웃 하시겠습니까?",
+                    "로그아웃 확인",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // 현재 창 닫기
+                dispose();
+
+                // 로그인 창 열기
+                new Login().setVisible(true);
+            }
+        });
+
         btnPanel.add(editBtn);
         btnPanel.add(logoutBtn);
 
@@ -539,4 +557,5 @@ class StudentDialog extends JDialog {
         mainPanel.add(btnPanel, BorderLayout.SOUTH);
         add(mainPanel);
     }
+
 }
