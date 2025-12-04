@@ -1,5 +1,5 @@
-//package teamPro;
- package OOLL_FinalTeamProject;
+package teamPro;
+// package OOLL_FinalTeamProject;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -36,7 +36,7 @@ public class Student extends JFrame {
 
         // top 영역
         top.setLayout(new BorderLayout());
-        top.setPreferredSize(new Dimension(1200, 80));
+        top.setPreferredSize(new Dimension(1200, 50));
         top.setBackground(new Color(214, 230, 255));
 
         // logo 부분
