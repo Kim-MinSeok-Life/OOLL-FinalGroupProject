@@ -48,6 +48,7 @@ public class FindIdPage extends JFrame {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
         GridBagConstraints gbc = new GridBagConstraints();
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(8, 0, 8, 0);
         gbc.gridx = 0;
@@ -211,5 +212,5 @@ public class FindIdPage extends JFrame {
         new Login().setVisible(true); // Login.java의 클래스 이름 사용
         dispose();
     }
-    
+
 }

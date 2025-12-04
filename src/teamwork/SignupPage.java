@@ -202,11 +202,6 @@ public class SignupPage extends JFrame {
                 throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
             }
 
-            // 3. 비밀번호 형식 및 길이 검사 (최소 8자, 영문/숫자/특수문자 포함)
-            if (password.length() < 8 || !Pattern.matches("^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[^a-zA-Z0-9]).{8,}$", password)) {
-                throw new IllegalArgumentException("비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.");
-            }
-
             // 4. 아이디 중복 검사 (DB 연동 시 시스템 예외 처리)
             if (isIdDuplicate(id)) {
                 throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");

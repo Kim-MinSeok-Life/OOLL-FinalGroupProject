@@ -151,10 +151,6 @@ public class Login extends JFrame {
                     "로그인 시도\nID: " + id + "\nPW: " + password,
                     "로그인 정보",
                     JOptionPane.INFORMATION_MESSAGE);
-
-            // TODO: 실제 DB 연결 및 인증 로직 구현 후 MainPage.java 등으로 전환
-            // new TeachMain().setVisible(true);
-            // dispose();
         });
 
         setVisible(true);
