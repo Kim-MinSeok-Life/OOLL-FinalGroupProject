@@ -25,18 +25,18 @@ public class TeachMain extends JFrame {
     private final Font buttonFont = new Font("Malgun Gothic", Font.PLAIN, 12);
     private final Font addButtonFont = new Font("Malgun Gothic", Font.BOLD, 14);
 
-    // [필드] 테이블 모델
+    //테이블 모델
     private DefaultTableModel teacherTableModel;
     private final int PRICE_COLUMN_INDEX = 5;
 
-    // [필드] 원장 정보
+    //원장 정보
     private String managerId = "qwerqwer";
     private String managerName = "남궁현";
     private String managerJob = "원장";
     private String managerPhone = "01012364567";
     private String managerEmail = "qwer1234@naver.com";
     private String managerAddress = "경기도 수원";
-    // [추가] 원장 비밀번호 (더미 데이터)
+    //원장 비밀번호 (더미 데이터)
     private String managerPassword = "1234";
 
 
@@ -48,29 +48,29 @@ public class TeachMain extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // --- 1. 상단 헤더 (로그아웃 버튼 포함) ---
+        //상단 헤더 (로그아웃 버튼 포함)
         JPanel headerPanel = createHeaderPanel();
         add(headerPanel, BorderLayout.NORTH);
 
-        // --- 2. 메인 콘텐츠 패널 ---
+        //메인 콘텐츠 패널
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS)); // 수직 배치
         contentPanel.setBorder(new EmptyBorder(15, 30, 15, 30));
 
-        // 2-1. 단가 공통 관리 버튼
+        //단가 공통 관리 버튼
         contentPanel.add(createPriceManagementPanel());
         contentPanel.add(Box.createVerticalStrut(25));
 
-        // 2-2. 원장 정보 섹션
+        //원장 정보 섹션
         contentPanel.add(createManagerInfoPanel());
         contentPanel.add(Box.createVerticalStrut(25)); // 세로 여백
 
-        // 2-3. 탭 메뉴 (강의/강사/학생 관리)
+        //탭 메뉴 (강의/강사/학생 관리)
         JPanel tabPanel = createTabMenuPanel();
         contentPanel.add(tabPanel);
         contentPanel.add(Box.createVerticalStrut(15));
 
-        // 2-4. 강사 관리 콘텐츠 (JTable)
+        //강사 관리 콘텐츠 (JTable)
         contentPanel.add(createTeacherManagementPanel());
         contentPanel.add(Box.createVerticalGlue());
 
@@ -78,8 +78,6 @@ public class TeachMain extends JFrame {
 
         setVisible(true);
     }
-
-    // --- 헬퍼 메소드 ---
 
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -90,7 +88,7 @@ public class TeachMain extends JFrame {
         title.setFont(titleFont);
         panel.add(title, BorderLayout.WEST);
 
-        JButton logoutButton = new JButton("로그아웃 ->");
+        JButton logoutButton = new JButton("로그아웃");
         logoutButton.setFont(dataFont);
         logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         logoutButton.setBorderPainted(false);
@@ -100,7 +98,7 @@ public class TeachMain extends JFrame {
         //로그아웃 버튼 클릭 시 Login 창으로 이동
         logoutButton.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "로그아웃 되었습니다.", "알림", JOptionPane.INFORMATION_MESSAGE);
-            // new Login().setVisible(true); // Login 창 열기
+            new Login().setVisible(true); // Login 창 열기
             dispose(); //TeachMain 닫기
         });
         panel.add(logoutButton, BorderLayout.EAST);
@@ -125,7 +123,7 @@ public class TeachMain extends JFrame {
         dataContainer.setBorder(new EmptyBorder(20, 20, 20, 20));
         dataContainer.setBackground(Color.WHITE);
 
-        // 1. 제목 영역
+        //제목 영역
         JLabel title = new JLabel("원장 정보");
         title.setFont(sectionTitleFont);
         dataContainer.add(title);
@@ -135,7 +133,7 @@ public class TeachMain extends JFrame {
         subtitle.setBorder(new EmptyBorder(0, 0, 15, 0));
         dataContainer.add(subtitle);
 
-        // 2. 데이터 표시 영역 (GridBagLayout)
+        //데이터 표시 영역 (GridBagLayout)
         JPanel dataPanel = new JPanel(new GridBagLayout());
         dataPanel.setBackground(Color.WHITE);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -170,7 +168,7 @@ public class TeachMain extends JFrame {
         dataContainer.add(dataPanel);
         infoSection.add(dataContainer, BorderLayout.CENTER);
 
-        // 3. 수정 버튼 영역 (우측 상단)
+        //수정 버튼 영역 (우측 상단)
         JPanel editPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         editPanel.setBackground(Color.WHITE);
 
@@ -193,7 +191,7 @@ public class TeachMain extends JFrame {
         JTextField emailField = new JTextField(managerEmail, 15);
         JTextField addressField = new JTextField(managerAddress, 15);
 
-        // 수정 불가 필드
+        //수정 불가 필드
         JLabel idLabel = new JLabel(managerId);
         JLabel jobLabel = new JLabel(managerJob);
 
@@ -233,7 +231,7 @@ public class TeachMain extends JFrame {
         gbc.gridx = 0; gbc.gridy = 5; inputPanel.add(new JLabel("주소:"), gbc);
         gbc.gridx = 1; inputPanel.add(addressField, gbc);
 
-        // [추가] 비밀번호 변경 버튼 배치
+        //비밀번호 변경 버튼
         gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2; // 두 칸 차지
         gbc.fill = GridBagConstraints.NONE; // 가득 채우지 않음
         gbc.anchor = GridBagConstraints.EAST; // 오른쪽 정렬
@@ -262,13 +260,13 @@ public class TeachMain extends JFrame {
                     throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
                 }
 
-                // [업데이트] 필드 값 업데이트
+                //필드 값 업데이트
                 managerName = newName;
                 managerPhone = newPhone;
                 managerEmail = newEmail;
                 managerAddress = newAddress;
 
-                // [화면 갱신]
+                //화면 갱신
                 revalidate();
                 repaint();
 
@@ -277,7 +275,7 @@ public class TeachMain extends JFrame {
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "입력 오류", JOptionPane.WARNING_MESSAGE);
             } catch (Exception ex) {
-                // 실제 DB 오류 등 시스템 예외 처리
+                // 실제 DB 오류 등 시스템 예외 처리 혹시 몰라서 만듦
                 JOptionPane.showMessageDialog(this, "정보 수정 중 서버 오류 발생: " + ex.getMessage(), "시스템 오류", JOptionPane.ERROR_MESSAGE);
             }
         }
