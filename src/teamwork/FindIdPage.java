@@ -211,10 +211,5 @@ public class FindIdPage extends JFrame {
         new Login().setVisible(true); // Login.java의 클래스 이름 사용
         dispose();
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new FindIdPage();
-        });
-    }
+    
 }

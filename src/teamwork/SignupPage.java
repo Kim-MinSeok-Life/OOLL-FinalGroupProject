@@ -261,10 +261,4 @@ public class SignupPage extends JFrame {
     private boolean isEmailDuplicate(String email) {
         return email.equalsIgnoreCase("test@example.com");
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new SignupPage();
-        });
-    }
 }
