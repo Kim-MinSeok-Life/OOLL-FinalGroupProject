@@ -6,7 +6,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
-public class Login extends JFrame { // 클래스 이름은 Login.java와 일치해야 합니다.
+public class Login extends JFrame {
 
     // 창 크기 상수
     private static final int FRAME_WIDTH = 300;
