@@ -35,7 +35,7 @@ public class ChangePwPage extends JFrame {
     public ChangePwPage() {
         // 프레임 기본 설정
         setTitle("비밀번호 변경");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setLocationRelativeTo(null);
 
@@ -311,11 +311,5 @@ public class ChangePwPage extends JFrame {
     private void backToLogin() {
         new Login().setVisible(true); // Login.java의 클래스 이름 사용
         dispose();
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new FindIdPage();
-        });
     }
 }

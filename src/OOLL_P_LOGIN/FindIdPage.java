@@ -25,8 +25,7 @@ public class FindIdPage extends JFrame {
 
     public FindIdPage() {
         setTitle("아이디 찾기");
-        // [수정] JFrame.EXIT_ON_CLOSE 대신 DISPOSE_ON_CLOSE를 사용하여 이 창만 닫히도록 함
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setLocationRelativeTo(null);
 
@@ -250,11 +249,5 @@ public class FindIdPage extends JFrame {
     private void backToLogin() {
         new Login().setVisible(true); // Login.java의 클래스 이름 사용
         dispose();
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new FindIdPage();
-        });
     }
 }

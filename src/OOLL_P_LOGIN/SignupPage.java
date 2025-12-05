@@ -37,7 +37,7 @@ public class SignupPage extends JFrame {
     public SignupPage() {
         // 프레임 기본 설정
         setTitle("학원 관리 시스템 회원가입");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -147,7 +147,7 @@ public class SignupPage extends JFrame {
         loginLink.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // new Login().setVisible(true);
+                new Login().setVisible(true);
                 dispose();
             }
         });
@@ -318,11 +318,5 @@ public class SignupPage extends JFrame {
         } finally {
             DBConnect.close(pstmt);
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new SignupPage();
-        });
     }
 }

@@ -1,6 +1,7 @@
 //로그인
 package OOLL_P_LOGIN;
 
+import OOLL_P_LOGIN.DBConnect;
 import OOLL_P_Manager.TeacherManage;
 
 import javax.swing.*;
@@ -9,20 +10,20 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.*;
 import java.util.Arrays;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 public class Login extends JFrame {
 
-    // 창 크기 상수
     private static final int FRAME_WIDTH = 300;
     private static final int FRAME_HEIGHT = 550;
     private static final int FIELD_WIDTH = 220;
 
-    // 폰트 설정
     private final Font titleFont = new Font("Malgun Gothic", Font.BOLD, 24);
     private final Font smallFont = new Font("Malgun Gothic", Font.PLAIN, 12);
     private final Font buttonFont = new Font("Malgun Gothic", Font.BOLD, 16);
 
-    // 컴포넌트 선언
     private JTextField idField;
     private JPasswordField passwordField;
     private JButton loginButton;
@@ -37,42 +38,47 @@ public class Login extends JFrame {
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new GridBagLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(40, 30, 40, 30));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 40, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(8, 0, 8, 0);
 
+        // --- 로고 삽입 ---
+        JLabel logoLabel = createLogoLabel("logo.png");
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.EAST;
+        mainPanel.add(logoLabel, gbc);
+
         // --- 1. 제목 영역 ---
         JLabel titleLabel = new JLabel("로그인");
         titleLabel.setFont(titleFont);
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(titleLabel, gbc);
 
         JLabel subtitleLabel = new JLabel("학원 관리 시스템에 로그인하세요");
         subtitleLabel.setFont(smallFont);
-        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 30, 0);
+        gbc.gridy = 2; gbc.insets = new Insets(0, 0, 30, 0);
         mainPanel.add(subtitleLabel, gbc);
 
         // --- 2. 아이디 입력 영역 ---
         gbc.insets = new Insets(8, 0, 3, 0); gbc.gridwidth = 1; gbc.anchor = GridBagConstraints.WEST;
         JLabel idLabel = new JLabel("아이디");
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         mainPanel.add(idLabel, gbc);
 
         idField = new JTextField(20);
         idField.setPreferredSize(new Dimension(FIELD_WIDTH, 40));
-        gbc.gridy = 3; gbc.insets = new Insets(0, 0, 20, 0);
+        gbc.gridy = 4; gbc.insets = new Insets(0, 0, 20, 0);
         mainPanel.add(idField, gbc);
 
         // --- 3. 비밀번호 입력 영역 ---
         JLabel passwordLabel = new JLabel("비밀번호");
-        gbc.gridy = 4; gbc.insets = new Insets(8, 0, 3, 0);
+        gbc.gridy = 5; gbc.insets = new Insets(8, 0, 3, 0);
         mainPanel.add(passwordLabel, gbc);
 
         passwordField = new JPasswordField(20);
         passwordField.setPreferredSize(new Dimension(FIELD_WIDTH, 40));
-        gbc.gridy = 5; gbc.insets = new Insets(0, 0, 30, 0);
+        gbc.gridy = 6; gbc.insets = new Insets(0, 0, 30, 0);
         mainPanel.add(passwordField, gbc);
 
         // --- 4. 로그인 버튼 ---
@@ -82,14 +88,14 @@ public class Login extends JFrame {
         loginButton.setBackground(Color.BLACK);
         loginButton.setForeground(Color.WHITE);
         loginButton.setFocusPainted(false);
-        gbc.gridy = 6; gbc.insets = new Insets(0, 0, 30, 0);
+        gbc.gridy = 7; gbc.insets = new Insets(0, 0, 30, 0);
         mainPanel.add(loginButton, gbc);
 
         // --- 5. 회원가입 버튼/링크 ---
         JLabel signupLabel = new JLabel("회원가입");
         signupLabel.setFont(smallFont);
         signupLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridy = 7; gbc.insets = new Insets(0, 0, 30, 0);
+        gbc.gridy = 8; gbc.insets = new Insets(0, 0, 30, 0);
         mainPanel.add(signupLabel, gbc);
 
         signupLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -135,7 +141,7 @@ public class Login extends JFrame {
         bottomLinkPanel.add(separator);
         bottomLinkPanel.add(changePwLabel);
 
-        gbc.gridy = 8; gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridy = 9; gbc.insets = new Insets(0, 0, 0, 0);
         mainPanel.add(bottomLinkPanel, gbc);
 
         add(mainPanel, BorderLayout.CENTER);
@@ -144,6 +150,19 @@ public class Login extends JFrame {
         loginButton.addActionListener(e -> attemptLogin());
 
         setVisible(true);
+    }
+
+    private JLabel createLogoLabel(String path) {
+        try {
+            Image image = ImageIO.read(new File(path));
+            Image resizedImage = image.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+            return new JLabel(new ImageIcon(resizedImage));
+        } catch (IOException e) {
+            System.err.println("Error loading logo.png: " + e.getMessage());
+            JLabel label = new JLabel("[LOGO]");
+            label.setPreferredSize(new Dimension(50, 50));
+            return label;
+        }
     }
 
     private void attemptLogin() {
@@ -163,7 +182,6 @@ public class Login extends JFrame {
 
             conn = DBConnect.getConnection();
 
-            // member 테이블에서 role과 name을 조회
             String sql = "SELECT name, role FROM member WHERE member_id = ? AND password = ?";
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, id);
@@ -182,18 +200,16 @@ public class Login extends JFrame {
 
                 switch (userRole) {
                     case "원장":
-                    case "강사":
                         new TeacherManage(id).setVisible(true);
+                    case "강사":
+                        new TeacherMain(id).setVisible(true);
                         break;
                     case "학생":
-                        JOptionPane.showMessageDialog(this, "학생 페이지는 준비 중입니다.", "안내", JOptionPane.INFORMATION_MESSAGE);
+                        new StudentFrame(id).setVisible(true);
                         break;
-                    default:
-                        JOptionPane.showMessageDialog(this, "알 수 없는 사용자 역할입니다.", "오류", JOptionPane.ERROR_MESSAGE);
-                        return; // 이동 실패 시 창을 닫지 않음
                 }
 
-                dispose(); // 로그인 성공 및 이동 완료 후 현재 창 닫기
+                dispose();
 
             } else {
                 JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호가 일치하지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
@@ -211,7 +227,7 @@ public class Login extends JFrame {
         }
     }
 
-    // UI 헬퍼 메소드 (생략)
+    // UI 헬퍼 메소드 (createFieldRow에서 사용됨)
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(smallFont);
@@ -220,7 +236,6 @@ public class Login extends JFrame {
 
     private void createFieldRow(String labelText, JComponent field) {
         GridBagConstraints gbc = new GridBagConstraints();
-        // ... (GBC 설정 로직)
     }
 
 
