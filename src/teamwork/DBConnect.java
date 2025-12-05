@@ -1,3 +1,4 @@
+//DB연동
 package teamwork;
 
 import java.sql.Connection;

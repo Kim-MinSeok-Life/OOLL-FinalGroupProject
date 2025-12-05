@@ -1,3 +1,4 @@
+//로그인
 package teamwork;
 
 import javax.swing.*;
@@ -94,7 +95,7 @@ public class Login extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 setVisible(false);
-                // new SignupPage().setVisible(true);
+                new SignupPage().setVisible(true);
             }
         });
 
@@ -115,7 +116,7 @@ public class Login extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 setVisible(false);
-                // new FindIdPage().setVisible(true);
+                new FindIdPage().setVisible(true);
             }
         });
 
@@ -124,7 +125,7 @@ public class Login extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 setVisible(false);
-                // new ChangePwPage().setVisible(true);
+                new ChangePwPage().setVisible(true);
             }
         });
 
