@@ -1,10 +1,13 @@
 //비번받기
-package OOLL_P_LOGIN;
+package OOLL_P_Login;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.sql.*; // DB 관련 패키지 import
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Manager.*;
 
 
 public class ChangePwPage extends JFrame {

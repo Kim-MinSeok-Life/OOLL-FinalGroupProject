@@ -1,8 +1,8 @@
 //원장 강사 관리
 package OOLL_P_Manager;
 
-import OOLL_P_LOGIN.DBConnect;
-import OOLL_P_LOGIN.Login;
+import OOLL_P_Login.DBConnect;
+import OOLL_P_Login.Login;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,6 +17,9 @@ import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.*;
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Login.*;
 
 public class TeacherManage extends JFrame {
 

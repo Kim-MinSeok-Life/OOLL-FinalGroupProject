@@ -1,9 +1,12 @@
 //ID 찾기
-package OOLL_P_LOGIN;
+package OOLL_P_Login;
 
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*; // DB 관련 패키지 import
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.;
+import OOLL_P_Manager.*;
 
 
 public class FindIdPage extends JFrame {

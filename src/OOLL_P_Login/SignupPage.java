@@ -1,5 +1,5 @@
 //회원가입
-package OOLL_P_LOGIN;
+package OOLL_P_Login;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,6 +9,9 @@ import java.util.Arrays;
 import java.awt.event.ActionEvent;
 import java.sql.*;
 import java.util.regex.Pattern;
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Manager.*;
 
 public class SignupPage extends JFrame {
 

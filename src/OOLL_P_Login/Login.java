@@ -1,7 +1,6 @@
 //로그인
-package OOLL_P_LOGIN;
+package OOLL_P_Login;
 
-import OOLL_P_LOGIN.DBConnect;
 import OOLL_P_Manager.TeacherManage;
 
 import javax.swing.*;
@@ -13,6 +12,9 @@ import java.util.Arrays;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Manager.*;
 
 public class Login extends JFrame {
 
