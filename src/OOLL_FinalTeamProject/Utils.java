@@ -1,4 +1,4 @@
-//package teamPro;
+// 학생 - 공통 유틸리티(전화번호 검증 기능)
 package OOLL_FinalTeamProject;
 
 public class Utils {

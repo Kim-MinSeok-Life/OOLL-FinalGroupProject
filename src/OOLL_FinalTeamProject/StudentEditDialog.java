@@ -1,4 +1,4 @@
-//package teamPro;
+// 학생 - 개인정보 수정 창
 package OOLL_FinalTeamProject;
 
 import javax.swing.*;

@@ -1,4 +1,4 @@
-//package teamPro;
+// 학생 - 공통 DB 연결 유틸 클래스
 package OOLL_FinalTeamProject;
 
 import java.sql.*;

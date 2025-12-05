@@ -1,4 +1,4 @@
-//package teamPro;
+// 학생 - 메인 프레임(상단 로고, 로그아웃 포함)
 package OOLL_FinalTeamProject;
 
 import javax.swing.*;

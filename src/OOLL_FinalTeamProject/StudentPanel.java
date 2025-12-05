@@ -1,4 +1,4 @@
-//package teamPro;
+// 학생 - 메인 화면 패널 (개인정보, 내 강의, 수강신청)
 package OOLL_FinalTeamProject;
 
 import javax.swing.*;

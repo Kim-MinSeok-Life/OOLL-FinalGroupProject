@@ -1,4 +1,4 @@
-//package teamPro;
+// 학생 - DB 데이터 처리 서비스 (개인정보, 강의목록, 수강신청 등)
 package OOLL_FinalTeamProject;
 
 import java.sql.*;

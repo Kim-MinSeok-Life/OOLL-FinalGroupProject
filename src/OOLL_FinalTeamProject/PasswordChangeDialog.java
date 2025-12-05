@@ -1,4 +1,4 @@
-//package teamPro;
+// 학생 - 비밀번호 변경 창
 package OOLL_FinalTeamProject;
 
 import javax.swing.*;
