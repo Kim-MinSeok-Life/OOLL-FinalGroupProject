@@ -180,7 +180,6 @@ public class Login extends JFrame {
                 switch (userRole) {
                     case "원장":
                     case "강사":
-                        // 성공적으로 로그인된 ID를 TeachManage 생성자에 전달합니다.
                         new TeacherManage(id).setVisible(true);
                         break;
                     case "학생":
