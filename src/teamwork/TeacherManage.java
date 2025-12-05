@@ -1,3 +1,4 @@
+//원장 강사 관리
 package teamwork;
 
 import javax.swing.*;
