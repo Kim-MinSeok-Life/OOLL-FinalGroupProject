@@ -4,9 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.sql.*; // DB 관련 클래스 import
+import java.sql.*;
 import java.util.Arrays;
-import teamwork.DBConnect;
 
 public class Login extends JFrame {
 
@@ -95,7 +94,7 @@ public class Login extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 setVisible(false);
-                new SignupPage().setVisible(true);
+                // new SignupPage().setVisible(true);
             }
         });
 
@@ -116,7 +115,7 @@ public class Login extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 setVisible(false);
-                new FindIdPage().setVisible(true);
+                // new FindIdPage().setVisible(true);
             }
         });
 
@@ -125,7 +124,7 @@ public class Login extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 setVisible(false);
-                new ChangePwPage().setVisible(true);
+                // new ChangePwPage().setVisible(true);
             }
         });
 
@@ -138,7 +137,7 @@ public class Login extends JFrame {
 
         add(mainPanel, BorderLayout.CENTER);
 
-        //로그인 인증 로직
+        // [DB 통합] 로그인 인증 로직
         loginButton.addActionListener(e -> attemptLogin());
 
         setVisible(true);
@@ -178,20 +177,21 @@ public class Login extends JFrame {
                         "로그인 성공",
                         JOptionPane.INFORMATION_MESSAGE);
 
-                // 직책(Role)에 따른 페이지 이동 로직
                 switch (userRole) {
                     case "원장":
-                        //원장페이지 연결
-                        break;
                     case "강사":
-                        //강사페이지 연결
+                        // 성공적으로 로그인된 ID를 TeachManage 생성자에 전달합니다.
+                        new TeacherManage(id).setVisible(true);
                         break;
                     case "학생":
-                        //학생페이지 연결
+                        JOptionPane.showMessageDialog(this, "학생 페이지는 준비 중입니다.", "안내", JOptionPane.INFORMATION_MESSAGE);
                         break;
+                    default:
+                        JOptionPane.showMessageDialog(this, "알 수 없는 사용자 역할입니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                        return; // 이동 실패 시 창을 닫지 않음
                 }
 
-                dispose();
+                dispose(); // 로그인 성공 및 이동 완료 후 현재 창 닫기
 
             } else {
                 JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호가 일치하지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
@@ -209,7 +209,7 @@ public class Login extends JFrame {
         }
     }
 
-    // UI 헬퍼 메소드
+    // UI 헬퍼 메소드 (생략)
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(smallFont);
@@ -218,7 +218,7 @@ public class Login extends JFrame {
 
     private void createFieldRow(String labelText, JComponent field) {
         GridBagConstraints gbc = new GridBagConstraints();
-        // 실제 구현에 필요한 로직
+        // ... (GBC 설정 로직)
     }
 
 

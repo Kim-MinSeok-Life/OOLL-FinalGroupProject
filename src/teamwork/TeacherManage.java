@@ -30,7 +30,7 @@ public class TeacherManage extends JFrame {
     private DefaultTableModel teacherTableModel;
     private final int PRICE_COLUMN_INDEX = 5;
 
-    // 원장 정보 (기본값 제거)
+    // 원장 정보 (기본값 제거 - 생성자에서 할당됨)
     private String managerId = null;
     private String managerName = "";
     private String managerJob = "";
@@ -40,8 +40,10 @@ public class TeacherManage extends JFrame {
     private String managerPassword = null;
 
 
-    public TeacherManage() {
-        //원장 정보 로드
+    public TeacherManage(String id) {
+        this.managerId = id; // 로그인된 실제 ID를 받아서 설정
+
+        // [DB 로드] 원장 정보 로드 및 설정 (생성자 시작 시 호출)
         loadManagerInfo();
 
         // 프레임 기본 설정
@@ -82,22 +84,28 @@ public class TeacherManage extends JFrame {
         setVisible(true);
     }
 
-    /**직책이 '원장'인 유일한 레코드의 기본 정보를 DB에서 로드하는 메서드 */
+    /** [DB 통합] 로그인된 ID의 기본 정보를 DB에서 로드하는 메서드 */
     private void loadManagerInfo() {
+        if (managerId == null || managerId.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "오류: 로그인된 사용자 ID가 유효하지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
 
-        // SQL: ROLE이 '원장'인 모든 레코드의 member 필드를 조회
-        String sql = "SELECT m.member_id, m.name, m.phone, m.email, m.address, m.password, m.role FROM member m WHERE m.role = '원장'";
+        // SQL: 로그인된 ID의 member 정보를 전부 조회 (role 검사는 DB에 맡김)
+        String sql = "SELECT m.member_id, m.name, m.phone, m.email, m.address, m.password, m.role FROM member m WHERE m.member_id = ?";
 
         try {
             conn = DBConnect.getConnection();
             pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, managerId);
             rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                // 첫 번째 행 (원장 정보) 저장
+                // 필드에 DB 정보 저장
                 managerId = rs.getString("member_id");
                 managerName = rs.getString("name");
                 managerPhone = rs.getString("phone");
@@ -106,20 +114,19 @@ public class TeacherManage extends JFrame {
                 managerJob = rs.getString("role");
                 managerPassword = rs.getString("password");
 
-                // [검증] 두 번째 원장 레코드가 있는지 확인 (전제 조건 위반 검사)
-                if (rs.next()) {
-                    JOptionPane.showMessageDialog(this, "경고: DB에 2명 이상의 원장이 존재합니다. 첫 번째 원장 정보만 사용합니다.", "데이터 오류", JOptionPane.WARNING_MESSAGE);
+                // 직책이 원장이 아닌 경우 경고
+                if (!managerJob.equals("원장")) {
+                    JOptionPane.showMessageDialog(this, managerJob + " 권한으로 접속되었습니다. 관리자 기능 사용에 제한이 있을 수 있습니다.", "권한 안내", JOptionPane.WARNING_MESSAGE);
                 }
 
                 repaint();
             } else {
-                System.err.println("DB 연결 성공, 하지만 원장 정보가 없습니다.");
-                JOptionPane.showMessageDialog(this, "DB에 등록된 원장 계정이 없습니다.", "로드 오류", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "해당 ID에 대한 사용자 정보를 찾을 수 없습니다.", "로드 오류", JOptionPane.ERROR_MESSAGE);
             }
 
         } catch (SQLException ex) {
             System.err.println("Error loading manager info: " + ex.getMessage());
-            JOptionPane.showMessageDialog(this, "DB 연결 또는 드라이버 로드 실패: " + ex.getMessage().split("\n")[0], "DB 오류", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "DB 연결 오류: " + ex.getMessage().split("\n")[0], "DB 오류", JOptionPane.ERROR_MESSAGE);
         } finally {
             DBConnect.close(rs, pstmt, conn);
         }
@@ -315,7 +322,7 @@ public class TeacherManage extends JFrame {
                 pstmt.setString(2, newPhone);
                 pstmt.setString(3, newEmail);
                 pstmt.setString(4, newAddress);
-                pstmt.setString(5, managerId); // ID 사용
+                pstmt.setString(5, managerId);
 
                 pstmt.executeUpdate();
 
@@ -840,11 +847,5 @@ public class TeacherManage extends JFrame {
         public Object getCellEditorValue() {
             return label;
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new TeacherManage();
-        });
     }
 }
