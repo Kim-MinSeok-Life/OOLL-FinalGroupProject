@@ -1,4 +1,5 @@
-package teamPro;
+//package teamPro;
+package OOLL_FinalTeamProject;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,7 +23,7 @@ public class StudentFrame extends JFrame {
 
         // 로고 이미지 넣기
         ImageIcon icon = new ImageIcon(getClass().getResource("/img/logo.png"));
-        System.out.println(getClass().getResource("/images/logo.png"));
+        // System.out.println(getClass().getResource("/images/logo.png")); // 이미지 확인용 코드 
         Image img = icon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
         JLabel logoImgLabel = new JLabel(new ImageIcon(img));
 
