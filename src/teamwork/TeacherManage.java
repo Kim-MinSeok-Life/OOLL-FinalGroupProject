@@ -5,11 +5,14 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.regex.Pattern;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.sql.*;
 
 public class TeacherManage extends JFrame {
 
@@ -24,22 +27,23 @@ public class TeacherManage extends JFrame {
     private final Font buttonFont = new Font("Malgun Gothic", Font.PLAIN, 12);
     private final Font addButtonFont = new Font("Malgun Gothic", Font.BOLD, 14);
 
-    //테이블 모델
     private DefaultTableModel teacherTableModel;
     private final int PRICE_COLUMN_INDEX = 5;
 
-    //원장 정보
-    private String managerId = "qwerqwer";
-    private String managerName = "남궁현";
-    private String managerJob = "원장";
-    private String managerPhone = "01012364567";
-    private String managerEmail = "qwer1234@naver.com";
-    private String managerAddress = "경기도 수원";
-    //원장 비밀번호 (더미 데이터)
-    private String managerPassword = "1234";
+    // 원장 정보 (기본값 제거)
+    private String managerId = null;
+    private String managerName = "";
+    private String managerJob = "";
+    private String managerPhone = "";
+    private String managerEmail = "";
+    private String managerAddress = "";
+    private String managerPassword = null;
 
 
     public TeacherManage() {
+        //원장 정보 로드
+        loadManagerInfo();
+
         // 프레임 기본 설정
         setTitle("학원 관리 시스템");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -53,7 +57,7 @@ public class TeacherManage extends JFrame {
 
         //메인 콘텐츠 패널
         JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS)); // 수직 배치
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBorder(new EmptyBorder(15, 30, 15, 30));
 
         //단가 공통 관리 버튼
@@ -78,6 +82,50 @@ public class TeacherManage extends JFrame {
         setVisible(true);
     }
 
+    /**직책이 '원장'인 유일한 레코드의 기본 정보를 DB에서 로드하는 메서드 */
+    private void loadManagerInfo() {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        // SQL: ROLE이 '원장'인 모든 레코드의 member 필드를 조회
+        String sql = "SELECT m.member_id, m.name, m.phone, m.email, m.address, m.password, m.role FROM member m WHERE m.role = '원장'";
+
+        try {
+            conn = DBConnect.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // 첫 번째 행 (원장 정보) 저장
+                managerId = rs.getString("member_id");
+                managerName = rs.getString("name");
+                managerPhone = rs.getString("phone");
+                managerEmail = rs.getString("email");
+                managerAddress = rs.getString("address");
+                managerJob = rs.getString("role");
+                managerPassword = rs.getString("password");
+
+                // [검증] 두 번째 원장 레코드가 있는지 확인 (전제 조건 위반 검사)
+                if (rs.next()) {
+                    JOptionPane.showMessageDialog(this, "경고: DB에 2명 이상의 원장이 존재합니다. 첫 번째 원장 정보만 사용합니다.", "데이터 오류", JOptionPane.WARNING_MESSAGE);
+                }
+
+                repaint();
+            } else {
+                System.err.println("DB 연결 성공, 하지만 원장 정보가 없습니다.");
+                JOptionPane.showMessageDialog(this, "DB에 등록된 원장 계정이 없습니다.", "로드 오류", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (SQLException ex) {
+            System.err.println("Error loading manager info: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "DB 연결 또는 드라이버 로드 실패: " + ex.getMessage().split("\n")[0], "DB 오류", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            DBConnect.close(rs, pstmt, conn);
+        }
+    }
+
+
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(15, 30, 15, 30));
@@ -97,8 +145,8 @@ public class TeacherManage extends JFrame {
         //로그아웃 버튼 클릭 시 Login 창으로 이동
         logoutButton.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "로그아웃 되었습니다.", "알림", JOptionPane.INFORMATION_MESSAGE);
-            new Login().setVisible(true); // Login 창 열기
-            dispose(); //TeachMain 닫기
+            new Login().setVisible(true);
+            dispose();
         });
         panel.add(logoutButton, BorderLayout.EAST);
 
@@ -171,6 +219,16 @@ public class TeacherManage extends JFrame {
         JPanel editPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         editPanel.setBackground(Color.WHITE);
 
+        // 비밀번호 변경 버튼 추가
+        JButton findPwButton = new JButton("비밀번호 변경");
+        findPwButton.setFont(dataFont);
+        findPwButton.setBackground(Color.LIGHT_GRAY);
+        findPwButton.setFocusPainted(false);
+        findPwButton.addActionListener(e -> {
+            showPasswordChangeDialog();
+        });
+        editPanel.add(findPwButton);
+
         JButton editButton = new JButton("정보 수정");
         editButton.setFont(dataFont);
         editButton.setBackground(Color.LIGHT_GRAY);
@@ -193,13 +251,6 @@ public class TeacherManage extends JFrame {
         //수정 불가 필드
         JLabel idLabel = new JLabel(managerId);
         JLabel jobLabel = new JLabel(managerJob);
-
-        //비밀번호 변경 버튼
-        JButton pwChangeButton = new JButton("비밀번호 변경");
-        pwChangeButton.setFont(dataFont);
-        pwChangeButton.setFocusPainted(false);
-        pwChangeButton.addActionListener(e -> showPasswordChangeDialog());
-
 
         JPanel inputPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -230,13 +281,6 @@ public class TeacherManage extends JFrame {
         gbc.gridx = 0; gbc.gridy = 5; inputPanel.add(new JLabel("주소:"), gbc);
         gbc.gridx = 1; inputPanel.add(addressField, gbc);
 
-        //비밀번호 변경 버튼
-        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2; // 두 칸 차지
-        gbc.fill = GridBagConstraints.NONE; // 가득 채우지 않음
-        gbc.anchor = GridBagConstraints.EAST; // 오른쪽 정렬
-        gbc.insets = new Insets(15, 5, 0, 5);
-        inputPanel.add(pwChangeButton, gbc);
-
 
         int result = JOptionPane.showConfirmDialog(this, inputPanel,
                 "원장 정보 수정", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -246,6 +290,9 @@ public class TeacherManage extends JFrame {
             String newPhone = phoneField.getText().trim();
             String newEmail = emailField.getText().trim();
             String newAddress = addressField.getText().trim();
+
+            Connection conn = null;
+            PreparedStatement pstmt = null;
 
             try {
                 // 필수 필드 및 형식 검사
@@ -259,13 +306,26 @@ public class TeacherManage extends JFrame {
                     throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
                 }
 
-                //필드 값 업데이트
+                // DB에 정보 업데이트 로직
+                conn = DBConnect.getConnection();
+                String sql = "UPDATE member SET name = ?, phone = ?, email = ?, address = ? WHERE member_id = ?";
+                pstmt = conn.prepareStatement(sql);
+
+                pstmt.setString(1, newName);
+                pstmt.setString(2, newPhone);
+                pstmt.setString(3, newEmail);
+                pstmt.setString(4, newAddress);
+                pstmt.setString(5, managerId); // ID 사용
+
+                pstmt.executeUpdate();
+
+                // 필드 값 업데이트 (DB 성공 시)
                 managerName = newName;
                 managerPhone = newPhone;
                 managerEmail = newEmail;
                 managerAddress = newAddress;
 
-                //화면 갱신
+                // 화면 갱신
                 revalidate();
                 repaint();
 
@@ -274,8 +334,10 @@ public class TeacherManage extends JFrame {
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "입력 오류", JOptionPane.WARNING_MESSAGE);
             } catch (Exception ex) {
-                // 실제 DB 오류 등 시스템 예외 처리 혹시 몰라서 만듦
-                JOptionPane.showMessageDialog(this, "정보 수정 중 서버 오류 발생: " + ex.getMessage(), "시스템 오류", JOptionPane.ERROR_MESSAGE);
+                // SQL Exception 포함 일반 오류 처리
+                JOptionPane.showMessageDialog(this, "정보 수정 중 오류 발생: " + ex.getMessage(), "시스템 오류", JOptionPane.ERROR_MESSAGE);
+            } finally {
+                DBConnect.close(pstmt, conn);
             }
         }
     }
@@ -298,15 +360,12 @@ public class TeacherManage extends JFrame {
                 "비밀번호 변경 (1단계: 인증)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (authResult != JOptionPane.OK_OPTION) {
-            // Arrays.fill(currentPwField.getPassword(), '0'); // JDBC import가 없으므로 생략
             return;
         }
 
         char[] currentPwChars = currentPwField.getPassword();
         String enteredCurrentPw = new String(currentPwChars);
-        // Arrays.fill(currentPwChars, '0'); // 메모리 삭제 생략
 
-        // [인증 로직] 현재 비밀번호 확인 (더미 데이터 사용)
         if (!enteredCurrentPw.equals(managerPassword)) {
             JOptionPane.showMessageDialog(this, "현재 비밀번호가 일치하지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
             return;
@@ -341,23 +400,43 @@ public class TeacherManage extends JFrame {
                 if (!newPw.equals(confirmNewPw)) {
                     throw new IllegalArgumentException("새 비밀번호와 확인이 일치하지 않습니다.");
                 }
+                if (newPw.length() < 8) {
+                    throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
+                }
 
-                //비밀번호 업데이트
+                // [DB 통합] DB에 비밀번호 업데이트
+                updateManagerPasswordInDB(managerId, newPw);
+
+                // 비밀번호 필드 값 업데이트
                 managerPassword = newPw;
 
                 JOptionPane.showMessageDialog(this, "비밀번호가 성공적으로 변경되었습니다.", "변경 완료", JOptionPane.INFORMATION_MESSAGE);
 
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "입력 오류", JOptionPane.WARNING_MESSAGE);
-            } finally {
-                // 메모리 삭제 (JDBC import가 없으므로 생략)
-                // Arrays.fill(newPwChars, '0');
-                // Arrays.fill(confirmNewPwChars, '0');
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "DB 오류로 비밀번호 변경에 실패했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
             }
-        } else {
-            // 메모리 삭제 (JDBC import가 없으므로 생략)
-            // Arrays.fill(newPwField.getPassword(), '0');
-            // Arrays.fill(confirmNewPwField.getPassword(), '0');
+        }
+    }
+
+    /** [DB 통합] DB에 비밀번호를 업데이트하는 메서드 */
+    private void updateManagerPasswordInDB(String id, String newPassword) throws SQLException {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+
+        String sql = "UPDATE member SET password = ? WHERE member_id = ?";
+
+        try {
+            conn = DBConnect.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, newPassword);
+            pstmt.setString(2, id);
+
+            pstmt.executeUpdate();
+
+        } finally {
+            DBConnect.close(pstmt, conn);
         }
     }
 
@@ -370,7 +449,7 @@ public class TeacherManage extends JFrame {
         label.setFont(sectionTitleFont);
         panel.add(label);
 
-        JButton updatePriceButton = new JButton("단가 일괄 수정");
+        JButton updatePriceButton = new JButton("단가 수정");
         updatePriceButton.setFont(addButtonFont);
         updatePriceButton.setBackground(new Color(255, 165, 0));
         updatePriceButton.setForeground(Color.WHITE);
@@ -447,11 +526,7 @@ public class TeacherManage extends JFrame {
         // JTable 설정
         String[] columnNames = {"아이디", "이름", "이메일", "전화번호", "주소", "시간당 단가", "관리"};
 
-        Object[][] initialData = {
-                {"teacher01", "김수학", "kim.math@academy.com", "010-1111-2222", "서울시 강남구", "35,000원", "수정"},
-                {"teacher02", "이영아", "lee.english@academy.com", "010-3333-4444", "서울시 서초구", "40,000원", "수정"},
-                {"teacher03", "박과학", "park.science@academy.com", "010-5555-6666", "서울시 송파구", "38,000원", "수정"}
-        };
+        Object[][] initialData = loadTeacherData();
 
         teacherTableModel = new DefaultTableModel(initialData, columnNames) {
             @Override
@@ -477,6 +552,45 @@ public class TeacherManage extends JFrame {
         return teacherSection;
     }
 
+    /** [DB 통합] 강사 목록을 DB에서 로드하는 메서드 */
+    private Object[][] loadTeacherData() {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<Object[]> dataList = new ArrayList<>();
+
+        // SQL: member 테이블에서 role이 '강사'인 모든 회원의 정보를 로드
+        String sql = "SELECT m.member_id, m.name, m.email, m.phone, m.address, t.hourly_rate FROM member m JOIN teacher t ON m.member_id = t.member_id WHERE m.role = '강사'";
+
+        try {
+            conn = DBConnect.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                String rate = String.format("%,d원", rs.getInt("hourly_rate"));
+                Object[] row = {
+                        rs.getString("member_id"),
+                        rs.getString("name"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("address"),
+                        rate,
+                        "수정"
+                };
+                dataList.add(row);
+            }
+
+        } catch (SQLException ex) {
+            System.err.println("Failed to load teacher data: " + ex.getMessage());
+        } finally {
+            DBConnect.close(rs, pstmt, conn);
+        }
+
+        return dataList.toArray(new Object[0][0]);
+    }
+
+
     private void updateAllPrices() {
         if (teacherTableModel.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "등록된 강사 정보가 없습니다.", "경고", JOptionPane.WARNING_MESSAGE);
@@ -487,7 +601,7 @@ public class TeacherManage extends JFrame {
 
         int result = JOptionPane.showConfirmDialog(this,
                 new Object[]{"모든 강사의 새로운 시간당 단가 (숫자만 입력):", priceField},
-                "단가 일괄 수정", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                "단가 수정", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
             String newPriceStr = priceField.getText().trim();
@@ -497,15 +611,35 @@ public class TeacherManage extends JFrame {
                 return;
             }
 
-            String newPriceFormatted = String.format("%,d원", Integer.parseInt(newPriceStr));
+            int newRate = Integer.parseInt(newPriceStr);
+            String newPriceFormatted = String.format("%,d원", newRate);
 
-            for (int i = 0; i < teacherTableModel.getRowCount(); i++) {
-                teacherTableModel.setValueAt(newPriceFormatted, i, PRICE_COLUMN_INDEX);
+            Connection conn = null;
+            PreparedStatement pstmt = null;
+
+            try {
+                conn = DBConnect.getConnection();
+                // teacher 테이블의 모든 강사 단가 일괄 수정
+                String sql = "UPDATE teacher SET hourly_rate = ?";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setInt(1, newRate);
+
+                int affectedRows = pstmt.executeUpdate();
+
+                // UI 테이블 모델 업데이트
+                for (int i = 0; i < teacherTableModel.getRowCount(); i++) {
+                    teacherTableModel.setValueAt(newPriceFormatted, i, PRICE_COLUMN_INDEX);
+                }
+
+                JOptionPane.showMessageDialog(this,
+                        "총 " + affectedRows + "명의 강사 단가가 " + newPriceFormatted + "으로 일괄 수정되었습니다.",
+                        "수정 완료", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "단가 업데이트 중 DB 오류 발생.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
+            } finally {
+                DBConnect.close(pstmt, conn);
             }
-
-            JOptionPane.showMessageDialog(this,
-                    "총 " + teacherTableModel.getRowCount() + "명의 강사 단가가 " + newPriceFormatted + "으로 일괄 수정되었습니다.",
-                    "수정 완료", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -568,7 +702,7 @@ public class TeacherManage extends JFrame {
             button = new JButton();
             button.setOpaque(true);
 
-            // [수정] 버튼 클릭 시 이벤트 처리
+            // 버튼 클릭 시 이벤트 처리
             button.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -650,6 +784,9 @@ public class TeacherManage extends JFrame {
                     String newPhone = phoneField.getText().trim();
                     String newAddress = addressField.getText().trim();
 
+                    Connection conn = null;
+                    PreparedStatement pstmt = null;
+
                     try {
                         // [예외 처리] 강사 정보 형식 검사
                         if (newName.isEmpty()) {
@@ -662,6 +799,18 @@ public class TeacherManage extends JFrame {
                             throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
                         }
 
+                        // [DB 통합] DB에 정보 업데이트 (인라인 구현)
+                        conn = DBConnect.getConnection();
+                        String sql = "UPDATE member SET name = ?, phone = ?, email = ?, address = ? WHERE member_id = ?";
+                        pstmt = conn.prepareStatement(sql);
+                        pstmt.setString(1, newName);
+                        pstmt.setString(2, newPhone);
+                        pstmt.setString(3, newEmail);
+                        pstmt.setString(4, newAddress);
+                        pstmt.setString(5, currentId);
+
+                        pstmt.executeUpdate();
+
                         // [데이터 저장 로직] 변경된 내용을 테이블 모델에 반영
                         outerFrame.teacherTableModel.setValueAt(newName, selectedRow, 1);
                         outerFrame.teacherTableModel.setValueAt(newEmail, selectedRow, 2);
@@ -673,8 +822,12 @@ public class TeacherManage extends JFrame {
 
                     } catch (IllegalArgumentException ex) {
                         JOptionPane.showMessageDialog(outerFrame, ex.getMessage(), "입력 오류", JOptionPane.WARNING_MESSAGE);
+                    } catch (SQLException ex) {
+                        JOptionPane.showMessageDialog(outerFrame, "정보 수정 중 DB 오류 발생: " + ex.getMessage(), "시스템 오류", JOptionPane.ERROR_MESSAGE);
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(outerFrame, "정보 수정 중 시스템 오류 발생: " + ex.getMessage(), "시스템 오류", JOptionPane.ERROR_MESSAGE);
+                    } finally {
+                        DBConnect.close(pstmt, conn);
                     }
                 }
             } else {

@@ -4,7 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.*; // DB 관련 클래스 import
 import java.util.Arrays;
+import teamwork.DBConnect;
 
 public class Login extends JFrame {
 
@@ -28,12 +30,12 @@ public class Login extends JFrame {
         setTitle("학원 관리 시스템 로그인");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
-        setLocationRelativeTo(null); // 화면 중앙 배치
+        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new GridBagLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(40, 30, 40, 30)); // 내부 여백
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(40, 30, 40, 30));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -88,7 +90,6 @@ public class Login extends JFrame {
         gbc.gridy = 7; gbc.insets = new Insets(0, 0, 30, 0);
         mainPanel.add(signupLabel, gbc);
 
-
         signupLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         signupLabel.addMouseListener(new MouseAdapter() {
             @Override
@@ -98,6 +99,7 @@ public class Login extends JFrame {
             }
         });
 
+        // --- 6. 아이디 찾기 / 비밀번호 변경 영역 ---
         JPanel bottomLinkPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
 
         JLabel findIdLabel = new JLabel("아이디 찾기");
@@ -109,7 +111,6 @@ public class Login extends JFrame {
         JLabel changePwLabel = new JLabel("비밀번호 변경");
         changePwLabel.setFont(smallFont);
 
-        // 아이디 찾기 링크 이벤트: FindIdPage 열기
         findIdLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         findIdLabel.addMouseListener(new MouseAdapter() {
             @Override
@@ -119,7 +120,6 @@ public class Login extends JFrame {
             }
         });
 
-        // 비밀번호 변경 링크 이벤트: ChangePwPage 열기
         changePwLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         changePwLabel.addMouseListener(new MouseAdapter() {
             @Override
@@ -138,23 +138,89 @@ public class Login extends JFrame {
 
         add(mainPanel, BorderLayout.CENTER);
 
-        // 이벤트 리스너 (로그인 버튼)
-        loginButton.addActionListener(e -> {
-            String id = idField.getText();
-            char[] passwordChars = passwordField.getPassword();
-            String password = new String(passwordChars);
-
-            // 보안 조치: 비밀번호 배열을 덮어쓰기
-            Arrays.fill(passwordChars, '0');
-
-            JOptionPane.showMessageDialog(this,
-                    "로그인 시도\nID: " + id + "\nPW: " + password,
-                    "로그인 정보",
-                    JOptionPane.INFORMATION_MESSAGE);
-        });
+        //로그인 인증 로직
+        loginButton.addActionListener(e -> attemptLogin());
 
         setVisible(true);
     }
+
+    private void attemptLogin() {
+        String id = idField.getText().trim();
+        char[] passwordChars = passwordField.getPassword();
+        String password = new String(passwordChars);
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            if (id.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "아이디와 비밀번호를 입력해주세요.", "인증 오류", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            conn = DBConnect.getConnection();
+
+            // member 테이블에서 role과 name을 조회
+            String sql = "SELECT name, role FROM member WHERE member_id = ? AND password = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, id);
+            pstmt.setString(2, password);
+
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String userName = rs.getString("name");
+                String userRole = rs.getString("role");
+
+                JOptionPane.showMessageDialog(this,
+                        userName + " (" + userRole + ") 님, 환영합니다!",
+                        "로그인 성공",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // 직책(Role)에 따른 페이지 이동 로직
+                switch (userRole) {
+                    case "원장":
+                        //원장페이지 연결
+                        break;
+                    case "강사":
+                        //강사페이지 연결
+                        break;
+                    case "학생":
+                        //학생페이지 연결
+                        break;
+                }
+
+                dispose();
+
+            } else {
+                JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호가 일치하지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (SQLException ex) {
+            System.err.println("Login DB Error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "데이터베이스 오류가 발생했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            System.err.println("Unexpected Login Error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "예상치 못한 오류가 발생했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            DBConnect.close(rs, pstmt, conn);
+            Arrays.fill(passwordChars, '0');
+        }
+    }
+
+    // UI 헬퍼 메소드
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(smallFont);
+        return label;
+    }
+
+    private void createFieldRow(String labelText, JComponent field) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        // 실제 구현에 필요한 로직
+    }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

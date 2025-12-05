@@ -7,11 +7,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.awt.event.ActionEvent;
+import java.sql.*;
 import java.util.regex.Pattern;
 
 public class SignupPage extends JFrame {
 
-    // 창 크기 상수 (Login.java와 통일)
+    // 창 크기 상수
     private static final int FRAME_WIDTH = 300;
     private static final int FRAME_HEIGHT = 550;
     private static final int FIELD_WIDTH = 220;
@@ -36,7 +37,6 @@ public class SignupPage extends JFrame {
     public SignupPage() {
         // 프레임 기본 설정
         setTitle("학원 관리 시스템 회원가입");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setLocationRelativeTo(null);
@@ -94,9 +94,8 @@ public class SignupPage extends JFrame {
 
         // --- 3. 직책 (콤보박스) ---
         mainPanel.add(createLabel("직책"), gbc, y++);
-        // [수정] 직책 목록 통일
         String[] jobTitles = {"직책을 선택하세요", "원장", "강사", "학생"};
-        JComboBox<String> jobTitleCombo = new JComboBox<>(jobTitles);
+        jobTitleCombo = new JComboBox<>(jobTitles);
         jobTitleCombo.setPreferredSize(new Dimension(FIELD_WIDTH, 40));
         gbc.gridy = y++;
         gbc.insets = new Insets(0, 0, 15, 0);
@@ -131,12 +130,7 @@ public class SignupPage extends JFrame {
         // --- 6. 이미 계정이 있으신가요? 로그인 링크 ---
         JPanel loginLinkPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         JLabel textLabel = new JLabel("이미 계정이 있으신가요?");
-        textLabel.setFont(linkFont);
-
         JLabel loginLink = new JLabel("로그인");
-        loginLink.setFont(linkFont);
-        loginLink.setForeground(Color.BLUE);
-        loginLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         loginLinkPanel.add(textLabel);
         loginLinkPanel.add(loginLink);
@@ -153,7 +147,7 @@ public class SignupPage extends JFrame {
         loginLink.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                new Login().setVisible(true);
+                // new Login().setVisible(true);
                 dispose();
             }
         });
@@ -180,7 +174,7 @@ public class SignupPage extends JFrame {
         mainPanel.add(field, gbc);
     }
 
-    /**회원가입 예외 처리 로직 */
+    /** 회원가입 예외 처리 및 DB 저장 로직 */
     private void handleSignup(ActionEvent e) {
         String id = idField.getText().trim();
         char[] passwordChars = passwordField.getPassword();
@@ -188,72 +182,147 @@ public class SignupPage extends JFrame {
         String password = new String(passwordChars);
         String confirmPw = new String(confirmPwChars);
         String name = nameField.getText().trim();
-        String email = emailField.getText().trim();
+        String address = addressField.getText().trim();
         String phone = phoneField.getText().trim();
+        String email = emailField.getText().trim();
+        String question = (String) securityQuestionCombo.getSelectedItem();
+        String answer = answerField.getText().trim();
+        String role = (String) jobTitleCombo.getSelectedItem();
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
 
         try {
-            // 1. 필수 필드 누락 검사
-            if (id.isEmpty() || password.isEmpty() || confirmPw.isEmpty() || name.isEmpty() || email.isEmpty() || phone.isEmpty()) {
-                throw new IllegalArgumentException("필수 정보를 모두 입력해주세요.");
+            // 1. 필수 필드 및 형식 검사
+            if (id.isEmpty() || password.isEmpty() || confirmPw.isEmpty() || name.isEmpty() || address.isEmpty() || phone.isEmpty() || email.isEmpty() || question.equals("질문을 선택하세요") || answer.isEmpty() || role.equals("직책을 선택하세요")) {
+                throw new IllegalArgumentException("필수 정보를 모두 입력하고 직책을 선택해주세요.");
             }
-
-            // 2. 비밀번호 일치 검사
             if (!password.equals(confirmPw)) {
                 throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
             }
 
-            // 4. 아이디 중복 검사 (DB 연동 시 시스템 예외 처리)
-            if (isIdDuplicate(id)) {
-                throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
+            //비밀번호는 최소 8자 이상만 검사
+            if (password.length() < 8) {
+                throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
             }
 
-            // 5. 이메일 형식 및 중복 검사
             if (!Pattern.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,4}$", email)) {
                 throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
             }
-            if (isEmailDuplicate(email)) {
-                throw new IllegalArgumentException("이미 등록된 이메일입니다.");
-            }
-
-            // 6. 전화번호 형식 검사
             if (!Pattern.matches("^010-\\d{4}-\\d{4}$", phone)) {
                 throw new IllegalArgumentException("유효하지 않은 전화번호 형식입니다. (예: 010-1234-5678)");
             }
 
+            // 2. DB 연결 및 트랜잭션 설정
+            conn = DBConnect.getConnection();
+            conn.setAutoCommit(false);
 
-            // --- 모든 검증 통과 시 ---
+            // 3. 아이디 중복 검사 (DB 조회)
+            if (isIdDuplicate(conn, id)) {
+                throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
+            }
 
-            // [DB 저장 로직 실행]
+            // 4. 회원 정보 INSERT (member 테이블)
+            String memberSql = "INSERT INTO member (member_id, password, name, address, phone, email, security_question, security_answer, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            pstmt = conn.prepareStatement(memberSql);
+            pstmt.setString(1, id);
+            pstmt.setString(2, password);
+            pstmt.setString(3, name);
+            pstmt.setString(4, address);
+            pstmt.setString(5, phone);
+            pstmt.setString(6, email);
+            pstmt.setString(7, question);
+            pstmt.setString(8, answer);
+            pstmt.setString(9, role);
 
-            JOptionPane.showMessageDialog(this,
-                    "회원가입 요청이 접수되었습니다.\nID: " + id,
-                    "가입 완료",
-                    JOptionPane.INFORMATION_MESSAGE);
+            int rowsAffected = pstmt.executeUpdate();
 
-            // 가입 완료 후 로그인 페이지로 이동
-            new Login().setVisible(true);
-            dispose();
+            if (rowsAffected > 0) {
+                // 5. 역할별 추가 테이블 INSERT
+                insertRoleSpecificData(conn, id, role);
+
+                conn.commit(); // 트랜잭션 커밋
+
+                JOptionPane.showMessageDialog(this,
+                        role + " (" + id + ") 님, 가입이 완료되었습니다.",
+                        "가입 완료",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                new Login().setVisible(true);
+                dispose();
+            } else {
+                throw new SQLException("회원 가입에 실패했습니다. DB 오류.");
+            }
 
         } catch (IllegalArgumentException ex) {
-            // 사용자 입력 오류 (유효성 검사 실패)
             JOptionPane.showMessageDialog(this, ex.getMessage(), "입력 오류", JOptionPane.WARNING_MESSAGE);
-        } catch (RuntimeException ex) {
-            // 시스템 오류 (DB 연결 실패 등)
-            JOptionPane.showMessageDialog(this, "서버 오류: " + ex.getMessage(), "시스템 오류", JOptionPane.ERROR_MESSAGE);
+            if (conn != null) try { conn.rollback(); } catch (SQLException rollbackEx) { rollbackEx.printStackTrace(); }
+        } catch (SQLException ex) {
+            System.err.println("DB Error: " + ex.getMessage());
+            // 트랜잭션 오류 발생 시 롤백 시도
+            if (conn != null) try { conn.rollback(); } catch (SQLException rollbackEx) { rollbackEx.printStackTrace(); }
+            JOptionPane.showMessageDialog(this, "데이터베이스 오류가 발생했습니다. (" + ex.getMessage().split("\n")[0] + ")", "시스템 오류", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            System.err.println("Unexpected Error: " + ex.getMessage());
+            if (conn != null) try { conn.rollback(); } catch (SQLException rollbackEx) { rollbackEx.printStackTrace(); }
+            JOptionPane.showMessageDialog(this, "예상치 못한 오류가 발생했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
         } finally {
-            // 비밀번호 정보는 항상 메모리에서 삭제 (보안 조치)
+            // DB 연결은 DBConnect.close() 내에서 안전하게 닫습니다.
+            DBConnect.close(pstmt, conn);
             Arrays.fill(passwordChars, '0');
             Arrays.fill(confirmPwChars, '0');
         }
     }
 
-    //ID 중복 확인 (실제로는 DB 조회 필요)
-    private boolean isIdDuplicate(String id) {
-        return id.equalsIgnoreCase("testuser");
+    /** DB에서 ID 중복을 확인하는 메서드 */
+    private boolean isIdDuplicate(Connection conn, String id) throws SQLException {
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String sql = "SELECT member_id FROM member WHERE member_id = ?";
+
+        try {
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, id);
+            rs = pstmt.executeQuery();
+            return rs.next();
+        } finally {
+            // 트랜잭션을 위해 conn은 닫지 않음.
+            DBConnect.close(rs, pstmt); // DBConnect에 이 오버로딩 버전이 있다고 가정합니다.
+        }
     }
 
-    //이메일 중복 확인 (실제로는 DB 조회 필요)
-    private boolean isEmailDuplicate(String email) {
-        return email.equalsIgnoreCase("test@example.com");
+    /** 역할에 따라 강사, 학생, 원장 테이블에 추가 데이터를 삽입하는 메서드 */
+    private void insertRoleSpecificData(Connection conn, String memberId, String role) throws SQLException {
+        String sql = "";
+        PreparedStatement pstmt = null;
+
+        try {
+            switch (role) {
+                case "원장":
+                    sql = "INSERT INTO manager (member_id) VALUES (?)";
+                    break;
+                case "강사":
+                    sql = "INSERT INTO teacher (member_id, hourly_rate) VALUES (?, 30000)";
+                    break;
+                case "학생":
+                    sql = "INSERT INTO student (member_id) VALUES (?)";
+                    break;
+                default:
+                    return;
+            }
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, memberId);
+            pstmt.executeUpdate();
+
+        } finally {
+            DBConnect.close(pstmt);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new SignupPage();
+        });
     }
 }

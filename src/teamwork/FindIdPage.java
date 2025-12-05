@@ -3,7 +3,11 @@ package teamwork;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.sql.*; // DB 관련 패키지 import
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public class FindIdPage extends JFrame {
 
@@ -24,6 +28,7 @@ public class FindIdPage extends JFrame {
 
     public FindIdPage() {
         setTitle("아이디 찾기");
+        // [수정] JFrame.EXIT_ON_CLOSE 대신 DISPOSE_ON_CLOSE를 사용하여 이 창만 닫히도록 함
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setLocationRelativeTo(null);
@@ -33,8 +38,8 @@ public class FindIdPage extends JFrame {
 
         // 1단계: 입력 패널 추가
         cards.add(createInputPanel(), "INPUT");
-        // 2단계: 결과 패널 추가 (초기에는 숨김)
-        cards.add(createResultPanel("qwerqwer"), "RESULT"); // 예시 ID: qwerqwer
+        // 2단계: 결과 패널 추가
+        cards.add(createResultPanel("ID_PLACEHOLDER"), "RESULT");
 
         add(cards);
         cardLayout.show(cards, "INPUT"); // 시작은 입력 화면부터
@@ -160,13 +165,15 @@ public class FindIdPage extends JFrame {
         resultBox.setPreferredSize(new Dimension(300, 100));
         resultBox.setBackground(Color.WHITE);
 
-        // 아이콘 (✔)
-        JLabel checkIcon = new JLabel("⦿"); // 유니코드 원형 체크표시 대신 기호 사용
+        // 아이콘 (⦿)
+        JLabel checkIcon = new JLabel("⦿");
         checkIcon.setFont(new Font("SansSerif", Font.PLAIN, 20));
         checkIcon.setForeground(Color.ORANGE);
 
+        // [수정] ID가 표시될 레이블에 이름 부여
         JLabel idText = new JLabel("<html>회원님의 아이디는<br><b>" + foundId + "</b><br>입니다.</html>");
         idText.setFont(resultFont);
+        idText.setName("foundIdLabel"); // 결과 ID를 업데이트하기 위한 이름
 
         resultBox.add(checkIcon);
         resultBox.add(idText);
@@ -190,21 +197,56 @@ public class FindIdPage extends JFrame {
         return resultPanel;
     }
 
+    /**아이디 찾기 시도 로직 */
     private void attemptFindId() {
-        String email = emailField.getText();
+        String email = emailField.getText().trim();
         String question = (String) securityQuestionCombo.getSelectedItem();
-        String answer = answerField.getText();
+        String answer = answerField.getText().trim();
 
-        if (!email.isEmpty() && !answer.isEmpty() && securityQuestionCombo.getSelectedIndex() != 0) {
-            String foundId = "qwerqwer"; //예시 DB에서 찾은 실제 ID
+        if (email.isEmpty() || answer.isEmpty() || securityQuestionCombo.getSelectedIndex() == 0) {
+            JOptionPane.showMessageDialog(this, "모든 정보를 정확히 입력해주세요.", "입력 오류", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-            cards.remove(1);
-            cards.add(createResultPanel(foundId), "RESULT");
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String foundId = null;
 
-            cardLayout.show(cards, "RESULT");
+        try {
+            conn = DBConnect.getConnection();
 
-        } else {
-            JOptionPane.showMessageDialog(this, "모든 정보를 정확히 입력해주세요.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+            // member 테이블에서 이메일, 질문, 답변이 일치하는 ID를 조회
+            String sql = "SELECT member_id FROM member WHERE email = ? AND security_question = ? AND security_answer = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, email);
+            pstmt.setString(2, question);
+            pstmt.setString(3, answer);
+
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                foundId = rs.getString("member_id");
+            }
+
+            if (foundId != null) {
+                // 성공 시 결과 화면으로 전환
+
+                // 기존 결과 패널을 제거하고 새 ID로 새 패널을 추가한 후 전환
+                cards.remove(1);
+                cards.add(createResultPanel(foundId), "RESULT");
+
+                cardLayout.show(cards, "RESULT");
+
+            } else {
+                JOptionPane.showMessageDialog(this, "일치하는 회원 정보가 없습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (SQLException ex) {
+            System.err.println("DB Error during ID search: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "데이터베이스 오류가 발생했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            DBConnect.close(rs, pstmt, conn);
         }
     }
 
@@ -213,4 +255,9 @@ public class FindIdPage extends JFrame {
         dispose();
     }
 
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new FindIdPage();
+        });
+    }
 }

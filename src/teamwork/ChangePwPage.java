@@ -1,10 +1,12 @@
 package teamwork;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.sql.*; // DB 관련 패키지 import
 import java.util.regex.Pattern;
 
 public class ChangePwPage extends JFrame {
@@ -28,6 +30,9 @@ public class ChangePwPage extends JFrame {
     // 2단계 필드
     private JPasswordField newPasswordField;
     private JPasswordField confirmPasswordField;
+
+    // DB 업데이트 시 사용하기 위해, 인증 성공한 ID를 저장할 필드
+    private String authenticatedId;
 
     public ChangePwPage() {
         // 프레임 기본 설정
@@ -141,17 +146,46 @@ public class ChangePwPage extends JFrame {
         return mainPanel;
     }
 
+    /** 1단계: DB를 통한 본인 인증 로직 */
     private void attemptAuthentication() {
-        String id = idField.getText();
+        String id = idField.getText().trim();
         String question = (String) securityQuestionCombo.getSelectedItem();
-        String answer = answerField.getText();
+        String answer = answerField.getText().trim();
 
-        if (!id.isEmpty() && !answer.isEmpty() && securityQuestionCombo.getSelectedIndex() != 0) {
-            // 테스트를 위해 인증 성공 시 바로 2단계로 이동
-            cardLayout.show(cards, "CHANGE");
+        if (id.isEmpty() || answer.isEmpty() || securityQuestionCombo.getSelectedIndex() == 0) {
+            JOptionPane.showMessageDialog(this, "모든 정보를 정확히 입력해주세요.", "입력 오류", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-        } else {
-            JOptionPane.showMessageDialog(this, "모든 정보를 정확히 입력해주세요.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnect.getConnection();
+
+            // member 테이블에서 ID, 질문, 답변이 일치하는 레코드를 조회
+            String sql = "SELECT member_id FROM member WHERE member_id = ? AND security_question = ? AND security_answer = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, id);
+            pstmt.setString(2, question);
+            pstmt.setString(3, answer);
+
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // 인증 성공
+                authenticatedId = id; // 인증된 ID 저장
+                cardLayout.show(cards, "CHANGE"); // 2단계로 이동
+            } else {
+                JOptionPane.showMessageDialog(this, "인증 정보가 일치하지 않습니다.", "인증 실패", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (SQLException ex) {
+            System.err.println("DB Error during authentication: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "데이터베이스 오류가 발생했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            DBConnect.close(rs, pstmt, conn);
         }
     }
 
@@ -222,42 +256,68 @@ public class ChangePwPage extends JFrame {
         return changePanel;
     }
 
-    //비밀번호 변경 시도 로직
+    /** 2단계: DB를 통한 비밀번호 업데이트 로직 */
     private void attemptPasswordChange() {
         char[] newPwChars = newPasswordField.getPassword();
         char[] confirmPwChars = confirmPasswordField.getPassword();
         String newPw = new String(newPwChars);
         String confirmPw = new String(confirmPwChars);
 
-        if (newPw.isEmpty() || confirmPw.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "새 비밀번호를 모두 입력해주세요.", "입력 오류", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        Connection conn = null;
+        PreparedStatement pstmt = null;
 
-        if (!newPw.equals(confirmPw)) {
-            JOptionPane.showMessageDialog(this, "새 비밀번호와 확인이 일치하지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
-            // 보안 조치: 메모리 데이터 삭제
+        try {
+            if (authenticatedId == null || authenticatedId.isEmpty()) {
+                throw new IllegalStateException("인증된 사용자 ID가 없습니다. 1단계 인증을 다시 해주세요.");
+            }
+            if (newPw.isEmpty() || confirmPw.isEmpty()) {
+                throw new IllegalArgumentException("새 비밀번호를 모두 입력해주세요.");
+            }
+            if (!newPw.equals(confirmPw)) {
+                throw new IllegalArgumentException("새 비밀번호와 확인이 일치하지 않습니다.");
+            }
+
+            //비밀번호 길이 제약 (8자 이상)
+            if (newPw.length() < 8) {
+                throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
+            }
+
+            // DB 연결 및 업데이트
+            conn = DBConnect.getConnection();
+            String sql = "UPDATE member SET password = ? WHERE member_id = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, newPw);
+            pstmt.setString(2, authenticatedId);
+
+            int updatedRows = pstmt.executeUpdate();
+
+            if (updatedRows > 0) {
+                JOptionPane.showMessageDialog(this, "비밀번호가 성공적으로 변경되었습니다.", "변경 완료", JOptionPane.INFORMATION_MESSAGE);
+                backToLogin();
+            } else {
+                throw new SQLException("비밀번호 변경에 실패했습니다. (DB에 사용자가 없음)");
+            }
+
+        } catch (IllegalStateException | IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException ex) {
+            System.err.println("DB Error during password update: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "데이터베이스 오류로 비밀번호 변경에 실패했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            DBConnect.close(pstmt, conn);
             Arrays.fill(newPwChars, '0');
             Arrays.fill(confirmPwChars, '0');
-            return;
         }
-
- 
-        //실제 DB의 비밀번호 변경 로직이 실행
-   
-
-        JOptionPane.showMessageDialog(this, "비밀번호가 성공적으로 변경되었습니다.", "변경 완료", JOptionPane.INFORMATION_MESSAGE);
-
-        // 보안 조치: 메모리 데이터 삭제
-        Arrays.fill(newPwChars, '0');
-        Arrays.fill(confirmPwChars, '0');
-
-        // 변경 후 로그인 화면으로 돌아가기
-        backToLogin();
     }
+
     private void backToLogin() {
-        // FindIdPage에서 Login.java로 돌아올 때도 사용되므로 클래스 이름만 사용
-        new Login().setVisible(true);
+        new Login().setVisible(true); // Login.java의 클래스 이름 사용
         dispose();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new FindIdPage();
+        });
     }
 }
