@@ -1,5 +1,5 @@
 //DB연동
-package teamwork;
+package OOLL_P_LOGIN;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

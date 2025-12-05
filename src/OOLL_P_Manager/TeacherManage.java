@@ -1,5 +1,8 @@
 //원장 강사 관리
-package teamwork;
+package OOLL_P_Manager;
+
+import OOLL_P_LOGIN.DBConnect;
+import OOLL_P_LOGIN.Login;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

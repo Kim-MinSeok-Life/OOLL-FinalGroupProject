@@ -1,14 +1,11 @@
 //비번받기
-package teamwork;
+package OOLL_P_LOGIN;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.sql.*; // DB 관련 패키지 import
-import java.util.regex.Pattern;
+
 
 public class ChangePwPage extends JFrame {
 

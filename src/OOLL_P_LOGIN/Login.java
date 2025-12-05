@@ -1,5 +1,7 @@
 //로그인
-package teamwork;
+package OOLL_P_LOGIN;
+
+import OOLL_P_Manager.TeacherManage;
 
 import javax.swing.*;
 import java.awt.*;
