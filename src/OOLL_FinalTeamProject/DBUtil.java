@@ -9,7 +9,7 @@ public class DBUtil {
 
         String url = "jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC&characterEncoding=utf8";
         String user = "root";
-        String pass = "7907";
+        String pass = "java2025";
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
