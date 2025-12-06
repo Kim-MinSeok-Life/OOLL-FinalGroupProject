@@ -13,10 +13,6 @@ import java.awt.*; // GUI를 위한 컴포넌트(Layout, Color, Dimension 등 �
 import java.awt.event.*; // 이벤트 처리
 import java.sql.SQLException; // DB 예외 처리
 
-import teamTest.Student;
-//import OOLL_P_Student.StudentInfo;
-//import OOLL_P_Student.StudentFrame;
-
 // 로그인한 학생의 메인화면을 구성하는 패널(개인정보 표시, 내 강의 조회, 수강신청 화면 구성)
 public class StudentPanel extends JPanel {
     // [상단] 개인정보 텍스트 필드(아이디, 이름, 이메일, 전화번호, 주소)
