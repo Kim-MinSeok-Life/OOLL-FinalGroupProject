@@ -1,3 +1,4 @@
+//원장의 강사관리 화면
 package OOLL_P_Manager;
 
 import javax.swing.*;
@@ -10,9 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
+public class TeacherPanel extends JPanel {
 
-    // 폰트 설정 (친구 코드 그대로 유지)
+    // 폰트 설정
     private final Font sectionTitleFont = new Font("Malgun Gothic", Font.BOLD, 16);
     private final Font dataFont = new Font("Malgun Gothic", Font.PLAIN, 12);
     private final Font buttonFont = new Font("Malgun Gothic", Font.PLAIN, 12);
@@ -100,7 +101,7 @@ public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
 
         // 버튼 렌더러 & 에디터 설정
         table.getColumnModel().getColumn(6).setCellRenderer(new ButtonRenderer());
-        table.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JTextField(), this));
+        table.getColumnModel().getColumn(6).setCellEditor(new ButtonEditor(new JTextField(), this, table));
 
         JScrollPane scrollPane = new JScrollPane(table);
         // 사이즈 조정 (패널에 맞게)
@@ -110,7 +111,7 @@ public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
         return teacherSection;
     }
 
-    // [DB] 강사 데이터 로드 (친구 코드 유지 - DBConnect 부분만 수정 필요할 수도 있음)
+    // [DB] 강사 데이터 로드
     private Object[][] loadTeacherData() {
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -120,9 +121,7 @@ public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
         String sql = "SELECT m.member_id, m.name, m.email, m.phone, m.address, t.hourly_rate FROM member m JOIN teacher t ON m.member_id = t.member_id WHERE m.role = '강사'";
 
         try {
-            // ★ 주의: 친구가 만든 DBConnect 클래스를 쓰거나,
-            // 우리가 쓰는 DriverManager.getConnection(...) 방식으로 바꿔야 함.
-            // 일단 우리가 쓰는 방식으로 통일해서 안전하게 수정함!
+            // DB 연결 정보
             Class.forName("com.mysql.cj.jdbc.Driver");
             conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC", "root", "java2025");
 
@@ -138,7 +137,7 @@ public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
                         rs.getString("phone"),
                         rs.getString("address"),
                         rate,
-                        "수정"
+                        "수정" // 버튼 레이블
                 };
                 dataList.add(row);
             }
@@ -215,12 +214,13 @@ public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
         private JButton button;
         private String label;
         private boolean isPushed;
-        private TeacherPanel panel; // outerFrame 대신 사용
+        private TeacherPanel panel;
         private JTable table;
 
-        public ButtonEditor(JTextField textField, TeacherPanel panel) {
+        public ButtonEditor(JTextField textField, TeacherPanel panel, JTable table) {
             super(textField);
             this.panel = panel;
+            this.table = table;
             button = new JButton();
             button.setOpaque(true);
             button.addActionListener(e -> fireEditingStopped());
@@ -239,16 +239,35 @@ public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
         public Object getCellEditorValue() {
             if (isPushed) {
                 // 수정 로직 실행
-                handleEditAction(table);
+                handleAction(table);
             }
             isPushed = false;
             return label;
         }
 
-        private void handleEditAction(JTable table) {
+        private void handleAction(JTable table) {
             int row = table.getSelectedRow();
             if(row < 0) return;
 
+            // 수정 또는 삭제 옵션 선택
+            String[] options = {"정보 수정", "강사 삭제", "취소"};
+            int choice = JOptionPane.showOptionDialog(panel,
+                    table.getValueAt(row, 1).toString() + " 강사의 정보를 어떻게 관리하시겠습니까?",
+                    "강사 관리 옵션",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    options[2]); // 취소를 기본값으로
+
+            if (choice == 0) { // 정보 수정 선택
+                showEditDialog(table, row);
+            } else if (choice == 1) { // 강사 삭제 선택
+                handleDeleteAction(table, row);
+            }
+        }
+
+        private void showEditDialog(JTable table, int row) {
             String currentId = table.getValueAt(row, 0).toString();
             String currentName = table.getValueAt(row, 1).toString();
             String currentEmail = table.getValueAt(row, 2).toString();
@@ -270,11 +289,27 @@ public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
 
             int option = JOptionPane.showConfirmDialog(panel, message, "강사 정보 수정", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
-                // DB 업데이트 로직 (친구 코드 + 우리 DB 연결 방식)
                 updateTeacherInfo(currentId, nameField.getText(), emailField.getText(), phoneField.getText(), addressField.getText(), row);
             }
         }
 
+        // **새로 추가된 삭제 기능**
+        private void handleDeleteAction(JTable table, int row) {
+            String teacherName = table.getValueAt(row, 1).toString();
+            String teacherId = table.getValueAt(row, 0).toString();
+
+            int confirm = JOptionPane.showConfirmDialog(panel,
+                    teacherName + " 강사(" + teacherId + ")를 정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+                    "강사 삭제 확인",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                deleteTeacher(teacherId, row);
+            }
+        }
+
+        // DB 업데이트: 회원 정보 (member 테이블)만 업데이트
         private void updateTeacherInfo(String id, String name, String email, String phone, String addr, int row) {
             Connection conn = null;
             PreparedStatement pstmt = null;
@@ -291,17 +326,61 @@ public class TeacherPanel extends JPanel { // JFrame -> JPanel 변경
                 pstmt.executeUpdate();
 
                 // 테이블 갱신
-                table.setValueAt(name, row, 1);
-                table.setValueAt(email, row, 2);
-                table.setValueAt(phone, row, 3);
-                table.setValueAt(addr, row, 4);
+                teacherTableModel.setValueAt(name, row, 1);
+                teacherTableModel.setValueAt(email, row, 2);
+                teacherTableModel.setValueAt(phone, row, 3);
+                teacherTableModel.setValueAt(addr, row, 4);
 
-                JOptionPane.showMessageDialog(panel, "수정되었습니다.");
+                JOptionPane.showMessageDialog(panel, "강사 정보가 수정되었습니다.");
 
             } catch (Exception ex) {
                 ex.printStackTrace();
+                JOptionPane.showMessageDialog(panel, "강사 정보 수정 중 오류가 발생했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
             } finally {
                 try { if(pstmt!=null) pstmt.close(); if(conn!=null) conn.close(); } catch(Exception ex) {}
+            }
+        }
+
+        // **DB 삭제 메서드 (새로 추가)**
+        private void deleteTeacher(String id, int row) {
+            Connection conn = null;
+            PreparedStatement pstmtMember = null;
+            PreparedStatement pstmtTeacher = null;
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC", "root", "java2025");
+
+                // 외래 키 제약 조건으로 인해 teacher 테이블을 먼저 삭제해야 할 수 있습니다.
+                // 트랜잭션을 적용하면 더 안전하지만, 여기서는 간단하게 쿼리 두 개를 실행합니다.
+
+                // 1. teacher 테이블에서 삭제 (member_id가 외래 키로 참조될 가능성이 높음)
+                String sqlTeacher = "DELETE FROM teacher WHERE member_id = ?";
+                pstmtTeacher = conn.prepareStatement(sqlTeacher);
+                pstmtTeacher.setString(1, id);
+                pstmtTeacher.executeUpdate();
+
+                // 2. member 테이블에서 삭제
+                String sqlMember = "DELETE FROM member WHERE member_id = ?";
+                pstmtMember = conn.prepareStatement(sqlMember);
+                pstmtMember.setString(1, id);
+                pstmtMember.executeUpdate();
+
+                // JTable에서 행 삭제
+                teacherTableModel.removeRow(row);
+
+                JOptionPane.showMessageDialog(panel, "강사가 성공적으로 삭제되었습니다.");
+
+            } catch (SQLException ex) {
+                // SQL 에러 처리 (예: 외래 키 제약 조건 위반 등)
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(panel, "강사 삭제 중 데이터베이스 오류가 발생했습니다. 관련 테이블의 레코드를 먼저 삭제해야 할 수 있습니다.\n" + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(panel, "강사 삭제 중 오류가 발생했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            } finally {
+                try { if(pstmtMember!=null) pstmtMember.close(); } catch(Exception ex) {}
+                try { if(pstmtTeacher!=null) pstmtTeacher.close(); } catch(Exception ex) {}
+                try { if(conn!=null) conn.close(); } catch(Exception ex) {}
             }
         }
     }
