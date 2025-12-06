@@ -114,12 +114,15 @@ public class StudentService {
             p.setInt(1, studentNo);
             try (ResultSet rs = p.executeQuery()) {
                 while (rs.next()) {
+                	int start = rs.getInt("start_period");
+                	int end = rs.getInt("end_period");
+                	String period = Utils.getPeriodTitle(start) + " ~ " + Utils.getPeriodTitle(end);
                 	Object[] row = new Object[]{
                 			 rs.getInt("lecture_no"),
                              rs.getString("subject_name"),             // 과목명
                              rs.getString("teacher_name"),             // 강사명
                              rs.getString("weekday"),                  // 요일
-                             rs.getInt("start_period") + "~" + rs.getInt("end_period"),  // 시간
+                             period, // 시간
                              rs.getString("room"),                     // 강의실
                              rs.getInt("current_count")                // 현재 정원
                      };
@@ -318,9 +321,37 @@ public class StudentService {
         }
     }
     
-    // 강의 삭제
-//    public boolean deleteLecture(int lectureNo) throws SQLException {
-//        // DB에서 삭제 처리
-//    }
+    // 강의 삭제(수강 취소)
+    public boolean deleteLecture(int studentNo, int lectureNo) throws SQLException {
+        if (studentNo == -1) return false;
+
+        String deleteEnrollment = "DELETE FROM enrollment WHERE student_no = ? AND lecture_no = ?";
+        String updateLecture = "UPDATE lecture SET enrolled_count = enrolled_count - 1 WHERE lecture_no = ?";
+
+        try (Connection conn = DBUtil.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement pDel = conn.prepareStatement(deleteEnrollment);
+                 PreparedStatement pUpd = conn.prepareStatement(updateLecture)) {
+
+                pDel.setInt(1, studentNo);
+                pDel.setInt(2, lectureNo);
+                int deleted = pDel.executeUpdate();
+
+                if (deleted == 0) {
+                    conn.rollback();
+                    return false;
+                }
+
+                pUpd.setInt(1, lectureNo);
+                pUpd.executeUpdate();
+
+                conn.commit();
+                return true;
+            } catch (SQLException ex) {
+                conn.rollback();
+                throw ex;
+            }
+        }
+    }
 
 }
