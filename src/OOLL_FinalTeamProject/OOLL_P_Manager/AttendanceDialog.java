@@ -16,8 +16,7 @@ import java.util.Date;
 public class AttendanceDialog extends JDialog implements ActionListener {
 
     // --- 멤버 변수 선언 ---
-    String lectureNo; // 현재 어떤 강의의 출석부인지 식별하기 위한 강의번호(PK)
-
+    String lectureNo;     // 현재 어떤 강의의 출석부인지 식별하기 위한 강의번호(PK)
     JTextField dateField; // 날짜 입력창 (YYYY-MM-DD)
 
     DefaultTableModel tableModel; // 테이블 데이터 관리자
@@ -33,17 +32,17 @@ public class AttendanceDialog extends JDialog implements ActionListener {
     // 생성자: 팝업창 UI를 구성하고 초기 데이터를 로드합니다.
     // parent: 부모 프레임, title: 창 제목, lectureNo: 클릭된 강의의 번호
     public AttendanceDialog(JFrame parent, String title, String lectureNo) {
-        super(parent, title, true); // true: 모달 창 (뒤쪽 창 클릭 방지)
+        super(parent, title, true); // true: 모달 창 (이 창을 닫기 전에는 부모 창 클릭 불가)
         this.lectureNo = lectureNo; // 전달받은 강의 번호 저장 (DB 조회 시 사용)
         setSize(600, 500);          // 창 크기 설정 (가로 600, 세로 500)
         setLocationRelativeTo(parent); // 부모 창 중앙에 배치
 
-        // 메인 패널 설정
+        // 1. 메인 패널 설정
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20)); // 전체 여백 20px
         mainPanel.setBackground(Color.WHITE); // 배경 흰색
 
-        // 1. [상단] 날짜 선택 및 조회 패널
+        // 2. [상단] 날짜 선택 및 조회 패널
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT)); // 왼쪽 정렬
         topPanel.setBackground(Color.WHITE);
 
@@ -54,16 +53,16 @@ public class AttendanceDialog extends JDialog implements ActionListener {
         dateField = new JTextField(today, 10);
         topPanel.add(dateField);
 
-        loadBtn = new JButton("조회 / 초기화");
+        loadBtn = new JButton("조회");
         loadBtn.setBackground(new Color(240, 240, 240)); // 버튼 색상 (연회색)
         loadBtn.addActionListener(this); // 이벤트 연결
         topPanel.add(loadBtn);
 
-        // 2. [중앙] 수강생 목록 테이블
+        // 3. [중앙] 수강생 목록 테이블
         // 컬럼 구성: 0번 '학생번호'는 DB 업데이트용 PK (화면엔 숨길 예정)
         String[] cols = {"학생번호", "이름", "아이디", "연락처", "출결상태"};
 
-        // 테이블 모델 생성 (내용 수정 불가)
+        // 테이블 모델 생성 (내용 수정 불가하도록 설정)
         tableModel = new DefaultTableModel(null, cols) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -72,17 +71,17 @@ public class AttendanceDialog extends JDialog implements ActionListener {
         ManagerMainFrame.styleTable(table); // 공통 스타일 적용 (높이, 폰트 등)
 
         // ★ 핵심: 0번 컬럼(학생번호)을 화면(View)에서 숨김!
-        // (업데이트 쿼리 날릴 때 WHERE 조건절에 쓰기 위함)
+        // (업데이트 쿼리 날릴 때 WHERE 조건절에 쓰기 위함이지만, 사용자에게 보여줄 필요는 없음)
         table.removeColumn(table.getColumnModel().getColumn(0));
 
         JScrollPane scroll = new JScrollPane(table); // 스크롤바 추가
 
-        // 3. [하단] 상태 변경 버튼들 (출석, 지각, 결석)
+        // 4. [하단] 상태 변경 버튼들 (출석, 지각, 결석)
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0)); // 중앙 정렬
         btnPanel.setBackground(Color.WHITE);
         btnPanel.setBorder(new EmptyBorder(10, 0, 0, 0)); // 위쪽 간격
 
-        // 버튼 생성 도우미 메서드 사용 (코드 중복 제거)
+        // 버튼 생성 도우미 메서드 사용 (코드 중복 제거, 색상 흰색 통일)
         presentBtn = createStatusButton("출석", Color.WHITE);
         lateBtn = createStatusButton("지각", Color.WHITE);
         absentBtn = createStatusButton("결석", Color.WHITE);
@@ -140,73 +139,64 @@ public class AttendanceDialog extends JDialog implements ActionListener {
     private void loadAttendance() {
         String date = dateField.getText().trim();
 
-        // 1. 날짜 입력값 검증 (빈칸 확인)
-        if (date.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "날짜를 입력하세요.");
-            return;
-        }
-
-        // 2. 정규표현식(Regex)을 이용한 날짜 형식 검사 (yyyy-MM-dd)
-        if (!date.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
-            JOptionPane.showMessageDialog(this, "날짜를 xxxx(년)-xx(월)-xx(일) 형식으로 입력해 주세요.\n예: 2025-12-05", "입력 오류", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // 3. 실제 존재하는 날짜인지 논리적 검사 (예: 2월 30일 방지)
         try {
-            java.time.LocalDate.parse(date);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "존재하지 않는 날짜입니다.", "입력 오류", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+            // 1. 날짜 형식 검증 (예외 전파 방식 사용)
+            validateDateInput(date);
 
-        tableModel.setRowCount(0); // 기존 테이블 내용 비우기
-        Connection con = null;
-        Statement stmt = null;
-        ResultSet rs = null;
+            // 2. DB 조회 로직 시작
+            tableModel.setRowCount(0); // 기존 테이블 내용 비우기
+            Connection con = null;
+            Statement stmt = null;
+            ResultSet rs = null;
 
-        try {
-            // DB 연결
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            String dbUrl = "jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC";
-            con = DriverManager.getConnection(dbUrl, "root", "java2025");
+            try {
+                // DB 연결
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                String dbUrl = "jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC";
+                con = DriverManager.getConnection(dbUrl, "root", "java2025");
 
-            // 4. [프로시저 호출] proc_init_attendance
-            // 역할: 해당 날짜에 출결 데이터가 없으면, 수강생 전체를 '결석' 상태로 일괄 생성(INSERT)함.
-            // 이렇게 하면 자바에서 일일이 INSERT 할 필요가 없어서 성능이 좋음.
-            String procSql = "CALL proc_init_attendance(" + lectureNo + ", '" + date + "')";
-            stmt = con.createStatement();
-            stmt.execute(procSql); // 프로시저 실행
-            stmt.close(); // 닫고 다시 엶 (다음 쿼리 실행 위해)
+                // 3. [프로시저 호출] proc_init_attendance
+                // 역할: 해당 날짜에 출결 데이터가 없으면, 수강생 전체를 '결석' 상태로 일괄 생성(INSERT)함.
+                // 자바에서 일일이 INSERT 하는 것보다 DB 프로시저로 한 방에 처리하는 것이 성능상 유리함.
+                String procSql = "CALL proc_init_attendance(" + lectureNo + ", '" + date + "')";
+                stmt = con.createStatement();
+                stmt.execute(procSql); // 프로시저 실행
+                stmt.close(); // 닫고 다시 엶 (다음 쿼리 실행 위해)
 
-            // 5. [조회 쿼리] 출결 테이블(attendance) + 학생 정보 JOIN
-            // attendance(a), student(s), member(m) 3개 테이블 조인
-            String selectSql = "SELECT s.student_no, m.name, m.member_id, m.phone, a.attendance_status " +
-                    "FROM attendance a " +
-                    "JOIN student s ON a.student_no = s.student_no " +
-                    "JOIN member m ON s.member_id = m.member_id " +
-                    "WHERE a.lecture_no = " + lectureNo + " AND a.att_date = '" + date + "' " +
-                    "ORDER BY m.name";
+                // 4. [조회 쿼리] 출결 테이블(attendance) + 학생 정보 JOIN
+                // attendance(a), student(s), member(m) 3개 테이블 조인하여 필요한 정보 가져옴
+                String selectSql = "SELECT s.student_no, m.name, m.member_id, m.phone, a.attendance_status " +
+                        "FROM attendance a " +
+                        "JOIN student s ON a.student_no = s.student_no " +
+                        "JOIN member m ON s.member_id = m.member_id " +
+                        "WHERE a.lecture_no = " + lectureNo + " AND a.att_date = '" + date + "' " +
+                        "ORDER BY m.name";
 
-            stmt = con.createStatement();
-            rs = stmt.executeQuery(selectSql);
+                stmt = con.createStatement();
+                rs = stmt.executeQuery(selectSql);
 
-            while(rs.next()) {
-                String sNo = rs.getString("student_no"); // PK
-                String name = rs.getString("name");
-                String id = rs.getString("member_id");
-                String phone = rs.getString("phone");
-                String status = rs.getString("attendance_status");
+                while(rs.next()) {
+                    String sNo = rs.getString("student_no"); // PK
+                    String name = rs.getString("name");
+                    String id = rs.getString("member_id");
+                    String phone = rs.getString("phone");
+                    String status = rs.getString("attendance_status");
 
-                // 모델에 데이터 추가 (0번: PK, 1~4: 화면 표시 데이터)
-                tableModel.addRow(new Object[]{sNo, name, id, phone, status});
+                    // 모델에 데이터 추가 (0번: PK, 1~4: 화면 표시 데이터)
+                    tableModel.addRow(new Object[]{sNo, name, id, phone, status});
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "DB 오류: " + e.getMessage());
+            } finally {
+                // 자원 해제
+                try { if(rs!=null) rs.close(); if(stmt!=null) stmt.close(); if(con!=null) con.close(); } catch(Exception ex) {}
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "DB 오류: " + e.getMessage());
-        } finally {
-            try { if(rs!=null) rs.close(); if(stmt!=null) stmt.close(); if(con!=null) con.close(); } catch(Exception ex) {}
+        } catch (InvalidInputException ex) {
+            // 5. 날짜 검증 예외 처리 (경고창)
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "입력 오류", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -227,6 +217,7 @@ public class AttendanceDialog extends JDialog implements ActionListener {
         Connection con = null;
         Statement stmt = null;
         try {
+            // DB 연결
             Class.forName("com.mysql.cj.jdbc.Driver");
             String dbUrl = "jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC";
             con = DriverManager.getConnection(dbUrl, "root", "java2025");
@@ -252,5 +243,28 @@ public class AttendanceDialog extends JDialog implements ActionListener {
         } finally {
             try { if(stmt!=null) stmt.close(); if(con!=null) con.close(); } catch(Exception ex) {}
         }
+    }
+
+    // ★ [검증 메소드] 날짜 입력값 검사 (throws 사용)
+    private void validateDateInput(String date) throws InvalidInputException {
+        // 빈칸 검사
+        if (date.isEmpty()) {
+            throw new InvalidInputException("날짜를 입력하세요.");
+        }
+        // 정규표현식(Regex) 검사 (yyyy-MM-dd 형식)
+        if (!date.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+            throw new InvalidInputException("날짜를 xxxx(년)-xx(월)-xx(일) 형식으로 입력해 주세요.\n예: 2025-12-05");
+        }
+        // 실제 날짜 유효성 검사 (예: 2월 30일 방지)
+        try {
+            java.time.LocalDate.parse(date);
+        } catch (Exception e) {
+            throw new InvalidInputException("존재하지 않는 날짜입니다.");
+        }
+    }
+
+    // ★ [사용자 정의 예외 클래스]
+    private static class InvalidInputException extends Exception {
+        public InvalidInputException(String message) { super(message); }
     }
 }
