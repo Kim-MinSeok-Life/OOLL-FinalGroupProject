@@ -14,7 +14,8 @@ public class LecturePanel extends JPanel implements ActionListener {
     JTable table;
     JTextField searchField;
 
-    JButton searchBtn, addBtn, editBtn, delBtn;
+    // ★ [추가됨] refreshBtn (새로고침 버튼)
+    JButton searchBtn, addBtn, editBtn, delBtn, refreshBtn;
 
     public LecturePanel(JFrame parent) {
         this.parentFrame = parent;
@@ -34,6 +35,11 @@ public class LecturePanel extends JPanel implements ActionListener {
         searchBtn.setBackground(new Color(245, 245, 245));
         searchBtn.addActionListener(this);
 
+        // ★ [추가] 새로고침 버튼 생성 및 리스너 연결
+        refreshBtn = new JButton("새로고침");
+        refreshBtn.setBackground(new Color(240, 240, 255)); // 살짝 다른 색으로 포인트
+        refreshBtn.addActionListener(this);
+
         addBtn = new JButton("강좌 개설");
         addBtn.setBackground(Color.WHITE);
         addBtn.addActionListener(this);
@@ -47,6 +53,8 @@ public class LecturePanel extends JPanel implements ActionListener {
         delBtn.addActionListener(this);
 
         topPanel.add(searchBtn);
+        topPanel.add(Box.createHorizontalStrut(5)); // 간격
+        topPanel.add(refreshBtn); // ★ 버튼 추가
         topPanel.add(Box.createHorizontalStrut(20));
         topPanel.add(addBtn);
         topPanel.add(editBtn);
@@ -61,7 +69,6 @@ public class LecturePanel extends JPanel implements ActionListener {
         ManagerMainFrame.styleTable(table);
         table.removeColumn(table.getColumnModel().getColumn(0));
 
-        // 더블 클릭 이벤트 (출결 관리)
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -90,6 +97,11 @@ public class LecturePanel extends JPanel implements ActionListener {
         if (source == searchBtn || source == searchField) {
             refreshTable(searchField.getText());
 
+        } else if (source == refreshBtn) {
+            // ★ [추가] 새로고침 버튼 누르면 검색어 초기화하고 전체 목록 다시 불러오기
+            searchField.setText("");
+            refreshTable("");
+
         } else if (source == addBtn) {
             new LectureDialog(parentFrame, "강좌 개설", null).setVisible(true);
             refreshTable("");
@@ -100,21 +112,17 @@ public class LecturePanel extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(parentFrame, "수정할 강좌를 선택해주세요.");
                 return;
             }
-            // 데이터 가져오기
             String no = table.getModel().getValueAt(selectedRow, 0).toString();
             String subject = table.getModel().getValueAt(selectedRow, 1).toString();
             String teacher = table.getModel().getValueAt(selectedRow, 2).toString();
             String room = table.getModel().getValueAt(selectedRow, 3).toString();
             String day = table.getModel().getValueAt(selectedRow, 4).toString();
             String time = table.getModel().getValueAt(selectedRow, 5).toString();
-
-            // "5 / 20" 형태에서 분리
             String countInfo = table.getModel().getValueAt(selectedRow, 6).toString();
             String[] counts = countInfo.split(" / ");
-            String currentCount = counts[0]; // 현재 수강인원 (예: 5)
-            String capacity = counts[1];     // 현재 정원 (예: 20)
+            String currentCount = counts[0];
+            String capacity = counts[1];
 
-            // ★ [수정됨] currentCount(수강인원)도 배열에 추가해서 보냄!
             String[] currentData = {no, subject, teacher, room, day, time, capacity, currentCount};
 
             new LectureDialog(parentFrame, "강좌 수정", currentData).setVisible(true);
@@ -179,7 +187,10 @@ public class LecturePanel extends JPanel implements ActionListener {
                 String room = rs.getString("classroom_name");
                 String day = rs.getString("day_of_week");
                 String time = rs.getInt("start_period") + "-" + rs.getInt("end_period") + "교시";
+
+                // DB에서 가져온 최신 수강인원 (트리거가 업데이트한 값)
                 String count = rs.getInt("enrolled_count") + " / " + rs.getInt("capacity");
+
                 tableModel.addRow(new Object[]{no, sub, tName, room, day, time, count});
             }
         } catch (Exception e) {
