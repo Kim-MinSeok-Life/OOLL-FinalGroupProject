@@ -14,7 +14,7 @@ public class StudentPanel extends JPanel implements ActionListener {
     JTable table;
     JTextField searchField;
 
-    // ★ feeBtn 추가됨
+    // 버튼 멤버 변수
     JButton searchBtn, editBtn, delBtn, feeBtn;
 
     public StudentPanel(JFrame parent) {
@@ -28,7 +28,7 @@ public class StudentPanel extends JPanel implements ActionListener {
 
         topPanel.add(new JLabel("학생명/ID 검색 : "));
         searchField = new JTextField(15);
-        searchField.addActionListener(this);
+        searchField.addActionListener(this); // 엔터키 처리
         topPanel.add(searchField);
 
         searchBtn = new JButton("검색");
@@ -43,7 +43,7 @@ public class StudentPanel extends JPanel implements ActionListener {
         delBtn.setBackground(Color.WHITE);
         delBtn.addActionListener(this);
 
-        // ★ [추가] 수강료 설정 버튼
+        // [추가] 수강료 설정 버튼
         feeBtn = new JButton("수강료 설정");
         feeBtn.setBackground(Color.WHITE);
         feeBtn.addActionListener(this);
@@ -52,9 +52,9 @@ public class StudentPanel extends JPanel implements ActionListener {
         topPanel.add(Box.createHorizontalStrut(20));
         topPanel.add(editBtn);
         topPanel.add(delBtn);
-        topPanel.add(feeBtn); // 패널에 추가
+        topPanel.add(feeBtn);
 
-        // ★ [수정됨] 컬럼 순서 변경: 아이디 -> 이름
+        // 컬럼 순서: 아이디 -> 이름 -> ... -> 학생번호(숨김)
         String[] cols = {"아이디", "이름", "전화번호", "이메일", "주소", "학생번호"};
 
         tableModel = new DefaultTableModel(null, cols) {
@@ -64,6 +64,7 @@ public class StudentPanel extends JPanel implements ActionListener {
         table = new JTable(tableModel);
         ManagerMainFrame.styleTable(table);
 
+        // 맨 마지막 컬럼(학생번호 PK) 숨기기 (인덱스 5)
         table.removeColumn(table.getColumnModel().getColumn(5));
 
         add(topPanel, BorderLayout.NORTH);
@@ -85,6 +86,8 @@ public class StudentPanel extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(parentFrame, "수정할 학생을 선택해주세요.");
                 return;
             }
+            // 데이터 가져오기 (컬럼 순서에 맞게 인덱스 주의)
+            // 0: 아이디, 1: 이름, 2: 전화, 3: 이메일, 4: 주소
             String id = table.getModel().getValueAt(selectedRow, 0).toString();
             String name = table.getModel().getValueAt(selectedRow, 1).toString();
             String phone = table.getModel().getValueAt(selectedRow, 2).toString();
@@ -93,6 +96,7 @@ public class StudentPanel extends JPanel implements ActionListener {
 
             String[] currentData = {id, name, phone, email, addr};
 
+            // 학생 수정 팝업 호출
             new StudentDialog(parentFrame, "학생 정보 수정", currentData).setVisible(true);
             refreshTable("");
 
@@ -100,11 +104,12 @@ public class StudentPanel extends JPanel implements ActionListener {
             deleteStudent();
 
         } else if (source == feeBtn) {
-            // ★ [추가] 수강료 설정 팝업 열기
+            // 수강료 설정 팝업 호출
             new FeeDialog(parentFrame).setVisible(true);
         }
     }
 
+    // 학생 삭제 메소드 (회원 테이블에서 삭제로 수정)
     private void deleteStudent() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow == -1) {
@@ -112,32 +117,43 @@ public class StudentPanel extends JPanel implements ActionListener {
             return;
         }
 
+        // 0번 컬럼(아이디)와 1번 컬럼(이름) 가져오기
+        String memberId = table.getModel().getValueAt(selectedRow, 0).toString();
         String name = table.getModel().getValueAt(selectedRow, 1).toString();
-        String studentNo = table.getModel().getValueAt(selectedRow, 5).toString();
 
         int confirm = JOptionPane.showConfirmDialog(parentFrame,
-                "[" + name + "] 학생을 삭제하시겠습니까?\n(수강 내역 및 출결 기록이 모두 삭제됩니다.)",
+                "[" + name + "] 학생을 정말 삭제하시겠습니까?\n(회원 정보 및 수강/출결 기록이 모두 영구 삭제됩니다.)",
                 "삭제 확인", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             Connection con = null;
-            Statement stmt = null;
+            PreparedStatement pstmt = null;
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                con = DriverManager.getConnection("jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC", "root", "java2025");
+                String dbUrl = "jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC";
+                con = DriverManager.getConnection(dbUrl, "root", "java2025");
 
-                String sql = "DELETE FROM student WHERE student_no = " + studentNo;
+                // ★ 핵심 변경: student 테이블이 아니라 'member' 테이블에서 삭제!
+                // DB의 ON DELETE CASCADE 설정 덕분에 관련된 모든 정보가 자동 삭제됨
+                String sql = "DELETE FROM member WHERE member_id = ?";
 
-                stmt = con.createStatement();
-                stmt.executeUpdate(sql);
+                pstmt = con.prepareStatement(sql);
+                pstmt.setString(1, memberId);
 
-                JOptionPane.showMessageDialog(parentFrame, "삭제되었습니다.");
-                refreshTable("");
+                int result = pstmt.executeUpdate();
+
+                if (result > 0) {
+                    JOptionPane.showMessageDialog(parentFrame, "삭제되었습니다.");
+                    refreshTable(""); // 목록 새로고침
+                } else {
+                    JOptionPane.showMessageDialog(parentFrame, "삭제 실패 (이미 삭제된 데이터일 수 있습니다).");
+                }
 
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(parentFrame, "삭제 실패: " + e.getMessage());
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(parentFrame, "삭제 중 오류 발생: " + e.getMessage());
             } finally {
-                try { if(stmt!=null) stmt.close(); if(con!=null) con.close(); } catch(Exception ex) {}
+                try { if(pstmt!=null) pstmt.close(); if(con!=null) con.close(); } catch(Exception ex) {}
             }
         }
     }
@@ -149,7 +165,8 @@ public class StudentPanel extends JPanel implements ActionListener {
         ResultSet rs = null;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC", "root", "java2025");
+            String dbUrl = "jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC";
+            con = DriverManager.getConnection(dbUrl, "root", "java2025");
 
             String sql = "SELECT * FROM view_student_info ";
             if (keyword != null && !keyword.trim().isEmpty()) {
@@ -168,6 +185,7 @@ public class StudentPanel extends JPanel implements ActionListener {
                 String addr = rs.getString("address");
                 int no = rs.getInt("student_no");
 
+                // 표에 넣는 순서: 아이디 -> 이름 -> ...
                 tableModel.addRow(new Object[]{id, name, phone, email, addr, no});
             }
         } catch (Exception e) {
