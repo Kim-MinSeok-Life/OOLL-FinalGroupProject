@@ -327,13 +327,15 @@ public class StudentService {
         if (studentNo == -1) return false;
 
         String deleteEnrollment = "DELETE FROM enrollment WHERE student_no = ? AND lecture_no = ?";
-        String updateLecture = "UPDATE lecture SET enrolled_count = enrolled_count - 1 WHERE lecture_no = ?";
+        String updateLecture = 
+            "UPDATE lecture SET enrolled_count = GREATEST(enrolled_count - 1, 0) WHERE lecture_no = ?";
 
         try (Connection conn = DBUtil.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement pDel = conn.prepareStatement(deleteEnrollment);
                  PreparedStatement pUpd = conn.prepareStatement(updateLecture)) {
 
+                // 수강 신청 기록 삭제
                 pDel.setInt(1, studentNo);
                 pDel.setInt(2, lectureNo);
                 int deleted = pDel.executeUpdate();
@@ -343,6 +345,7 @@ public class StudentService {
                     return false;
                 }
 
+                // 현재 인원 감소(0 이하로 내려가면 그대로 0 유지)
                 pUpd.setInt(1, lectureNo);
                 pUpd.executeUpdate();
 

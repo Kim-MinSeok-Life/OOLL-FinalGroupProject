@@ -11,8 +11,8 @@ import OOLL_P_Login.*;
 import OOLL_P_Manager.*;
 
 public class StudentFrame extends JFrame {
-    private String memberId; // 로그인한 학생 아이디
-    private JLabel lblUserName; // 우측 상단에 표시될 로그인한 회원명 라벨(로그아웃 버튼 왼쪽 옆 배치)
+    String memberId; // 로그인한 학생 아이디
+    JLabel lblUserName; // 우측 상단에 표시될 로그인한 회원명 라벨(로그아웃 버튼 왼쪽 옆 배치)
 
     // 생성자(로그인된 학생 아이디를 받아 학생 메인 화면 구성
     public StudentFrame(String memberId) {
@@ -63,7 +63,7 @@ public class StudentFrame extends JFrame {
         	// 로그아웃 확인 창 표시
             int result = JOptionPane.showConfirmDialog(this, "로그아웃 하시겠습니까?", "로그아웃", JOptionPane.YES_NO_OPTION);
             if (result == JOptionPane.YES_OPTION) { // 예(Yes) 클릭 시 로그인 화면으로 이동
-                SwingUtilities.invokeLater(() -> new LoginFrame()); // 로그인 화면으로 이동
+                SwingUtilities.invokeLater(() -> new Login()); // 로그인 화면으로 이동
                 dispose(); // 현재 학생 화면 닫기
             }
         });
