@@ -31,8 +31,8 @@ public class StudentFrame extends JFrame {
         top.setPreferredSize(new Dimension(1200, 60)); // 높이 설정
 
         // 로고 이미지 불러오기
-        ImageIcon icon = new ImageIcon(getClass().getResource("/img/logo.png"));
-        // System.out.println(getClass().getResource("/img/logo.png")); // 이미지 경로 확인용 코드
+        ImageIcon icon = new ImageIcon(getClass().getResource("logo.png"));
+        // System.out.println(getClass().getResource("logo.png")); // 이미지 경로 확인용 코드
         
         // 로고 이미지 크기 조정
         Image img = icon.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
