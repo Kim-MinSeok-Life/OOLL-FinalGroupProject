@@ -49,14 +49,15 @@ public class StudentService {
     }
 
     // 개인정보 업데이트 (비밀번호는 여기서 변경하지 않음)
-    public boolean updateMemberInfo(String memberId, String name, String phone, String address) throws SQLException {
-        String sql = "UPDATE member SET name = ?, phone = ?, address = ? WHERE member_id = ?";
+    public boolean updateMemberInfo(String memberId, String name, String phone, String address, String email) throws SQLException {
+        String sql = "UPDATE member SET name = ?, phone = ?, address = ?, email = ? WHERE member_id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement p = conn.prepareStatement(sql)) {
-            p.setString(1, name);
+        	p.setString(1, name);
             p.setString(2, phone);
             p.setString(3, address);
-            p.setString(4, memberId);
+            p.setString(4, email);
+            p.setString(5, memberId);
             return p.executeUpdate() > 0;
         }
     }
@@ -93,12 +94,14 @@ public class StudentService {
         if (studentNo == -1) return;
 
         String sql =
-                "SELECT l.subject_name, mb.name AS teacher_name, l.lecture_no, l.day_of_week AS weekday, l.start_period, l.end_period, l.classroom_name AS room " +
-                "FROM enrollment e " +
-                "JOIN lecture l ON e.lecture_no = l.lecture_no " +
-                "JOIN teacher t ON l.teacher_no = t.teacher_no " +
-                "JOIN member mb ON t.member_id = mb.member_id " +
-                "WHERE e.student_no = ? AND e.status = '수강중'";
+        	    "SELECT l.lecture_no, l.subject_name, mb.name AS teacher_name, " +
+        	    "l.day_of_week AS weekday, l.start_period, l.end_period, " +
+        	    "l.classroom_name AS room, l.enrolled_count AS current_count " +
+        	    "FROM enrollment e " +
+        	    "JOIN lecture l ON e.lecture_no = l.lecture_no " +
+        	    "JOIN teacher t ON l.teacher_no = t.teacher_no " +
+        	    "JOIN member mb ON t.member_id = mb.member_id " +
+        	    "WHERE e.student_no = ? AND e.status = '수강중'";
 
         List<Object[]> temp = new ArrayList<>();
         try (Connection conn = DBUtil.getConnection();
@@ -106,14 +109,15 @@ public class StudentService {
             p.setInt(1, studentNo);
             try (ResultSet rs = p.executeQuery()) {
                 while (rs.next()) {
-                    Object[] row = new Object[]{
-                            rs.getString("subject_name"),
-                            rs.getString("teacher_name"),
-                            rs.getInt("lecture_no"),
-                            rs.getString("weekday"),
-                            rs.getInt("start_period") + "~" + rs.getInt("end_period"),
-                            rs.getString("room")
-                    };
+                	Object[] row = new Object[]{
+                			 rs.getInt("lecture_no"),
+                             rs.getString("subject_name"),             // 과목명
+                             rs.getString("teacher_name"),             // 강사명
+                             rs.getString("weekday"),                  // 요일
+                             rs.getInt("start_period") + "~" + rs.getInt("end_period"),  // 시간
+                             rs.getString("room"),                     // 강의실
+                             rs.getInt("current_count")                // 현재 정원
+                     };
                     temp.add(row);
                 }
             }
@@ -308,4 +312,10 @@ public class StudentService {
             }
         }
     }
+    
+    // 강의 삭제
+//    public boolean deleteLecture(int lectureNo) throws SQLException {
+//        // DB에서 삭제 처리
+//    }
+
 }

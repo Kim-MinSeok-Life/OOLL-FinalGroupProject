@@ -7,7 +7,7 @@ import java.awt.event.*;
 import java.sql.SQLException;
 
 /**
- * 비밀번호 변경 전용 다이얼로그 (독립 클래스)
+ * 비밀번호 변경 전용 다이얼로그(독립 클래스)
  * - 현재 비밀번호 확인 후 변경
  */
 public class PasswordChangeDialog extends JDialog {
@@ -51,6 +51,11 @@ public class PasswordChangeDialog extends JDialog {
             }
             if (!nw.equals(cf)) {
                 JOptionPane.showMessageDialog(this, "새 비밀번호와 확인이 일치하지 않습니다.", "오류", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            if (nw.equals(cur)) {
+                JOptionPane.showMessageDialog(this, "새 비밀번호는 현재 비밀번호와 동일할 수 없습니다.", "오류", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
