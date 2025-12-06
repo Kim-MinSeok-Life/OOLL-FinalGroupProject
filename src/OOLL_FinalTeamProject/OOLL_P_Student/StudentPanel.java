@@ -1,6 +1,11 @@
 // 학생 - 메인 화면 패널 (개인정보, 내 강의, 수강신청)
 package OOLL_P_Student; // 패키지 선언
 
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Login.*;
+import OOLL_P_Manager.*;
+
 // import 선언
 import javax.swing.*; // swing GUI(Graphical User Interface) 컴포넌트
 import javax.swing.table.*; // swing GUI 컴포넌트(JTable, TableModel 관련)
@@ -94,8 +99,8 @@ public class StudentPanel extends JPanel {
         infoPanel.add(new JLabel("주소"));
         infoPanel.add(addressPanel); // 정보 수정 버튼과 함께 배치
 
-        // 탭 패널(내 강의/수강신청)
-        JTabbedPane tabPane = new JTabbedPane();
+        // 탭 패널(내 강의/수강신청) 생성
+        JTabbedPane tabPane = new JTabbedPane(); // JTabbedPane: 탭 형태로 구성하여 하나의 창에 표시할 수 있게 해주는 컴포넌트
         tabPane.setPreferredSize(new Dimension(1100, 500)); // 탭 전체 크기 지정
 
         // 내 강의 탭(학생이 현재 수강중인 강의)
@@ -117,13 +122,40 @@ public class StudentPanel extends JPanel {
         // 내 강의 목록 클릭 시 해당 수강생의 출결 팝업 열기
         tableMyClass.addMouseListener(new MouseAdapter() { // 마우스 클릭시 이벤트 리스너 등록
             public void mouseClicked(MouseEvent e) { // 마우스 클릭 시 이벤트 처리
-                int r = tableMyClass.getSelectedRow(); // 클릭한 행(r) 인덱스 가져오기
-                if (r == -1) return; // 아무 행 선택되지 않을 때
-                int lectureNo = Integer.parseInt(tableMyClass.getValueAt(r, 0).toString()); // 숨겨둔 0번째 강의 번호 가져오기
-                String lectureName = tableMyClass.getValueAt(r, 1).toString(); // 1번째 강의명 가져오기
-                openAttendanceDialog(lectureNo, lectureName); // 선택한 강의 번호와 이름을 전달하여 출결/수강생 조회 다이얼로그 열기
+            	if(e.getClickCount() == 2) { // 더블 클릭 확인
+            		int r = tableMyClass.getSelectedRow(); // 클릭한 행(r) 인덱스 가져오기
+                    if (r == -1) return; // 아무 행 선택되지 않을 때
+                    int lectureNo = Integer.parseInt(tableMyClass.getValueAt(r, 0).toString()); // 숨겨둔 0번째 강의 번호 가져오기
+                    String lectureName = tableMyClass.getValueAt(r, 1).toString(); // 1번째 강의명 가져오기
+                    openAttendanceDialog(lectureNo, lectureName); // 선택한 강의 번호와 이름을 전달하여 출결/수강생 조회 다이얼로그 열기
+            	}
             }
         });
+        
+        // 강의 삭제
+        JButton deleteBtn = new JButton("강의 삭제"); // 버튼
+        deleteBtn.addActionListener(e -> { // 버튼 클릭 시 이벤트 처리
+            int r = tableMyClass.getSelectedRow(); // 클릭한 행(r) 인덱스 가져오기
+            if(r == -1) return; // 아무 행 선택되지 않을 때
+            String lectureName = tableMyClass.getValueAt(r, 1).toString(); 
+            int lectureNo = Integer.parseInt(tableMyClass.getValueAt(r, 0).toString());
+            // 사용자에게 삭제 확인 받기위한 다이얼로그 열기
+            int result = JOptionPane.showConfirmDialog(this, lectureName + " 강의를 정말로 삭제하시겠습니까?", "강의 삭제", JOptionPane.YES_NO_OPTION);
+            if(result == JOptionPane.YES_OPTION){
+                try { // 삭제 성공 시
+                	service.deleteLecture(currentStudentNo, lectureNo);
+                    reloadAllData(); // 삭제 후 화면 갱신
+                } catch(SQLException ex){
+                	// DB 쿼리 수행 중 에러 발생 시
+                    JOptionPane.showMessageDialog(this, "삭제 실패: " + ex.getMessage());
+                }
+            }
+        });
+        JPanel southMyClassPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        southMyClassPanel.add(deleteBtn);
+        myClassPanel.add(southMyClassPanel, BorderLayout.SOUTH);
+        
+        tabPane.addTab("내 강의", myClassPanel);
 
         // 수강신청 탭(전체 강의 목록, 검색/정렬)
         JPanel coursePanel = new JPanel(new BorderLayout());
@@ -193,11 +225,13 @@ public class StudentPanel extends JPanel {
     }
 
     /* 전체 데이터 다시 로드
-     * StudentService -> 개인정보, 강의 목록 화면 반영
+     * StudentService -> 로그인된 학생의 개인정보, 강의 목록 화면 반영
      * currentMemberId로 StudentInfo 조회(조회 성공 시 tf* 필드에 값 채움)
+     * 내 강의 목록 갱신
+     * 전체 강의 목록 갱신
     */
     private void reloadAllData() {
-        try {
+        try { // 로그인한 개인정보 조회 성공 시
             StudentInfo info = service.loadStudentInfo(currentMemberId); // 로그인한 회원 전체 개인정보 데이터 조회
             if (info != null) {
             	// 조회된 정보를 반영
@@ -206,7 +240,7 @@ public class StudentPanel extends JPanel {
                 tfEmail.setText(info.email);
                 tfPhone.setText(info.phone);
                 tfAddress.setText(info.address);
-                currentStudentNo = info.studentNo;
+                currentStudentNo = info.studentNo; // 수강신청에서 사용됨
             } else {
             	// 로그인한 개인정보 조회 실패 시
                 JOptionPane.showMessageDialog(this, "회원정보가 없습니다: " + currentMemberId);
@@ -222,7 +256,7 @@ public class StudentPanel extends JPanel {
 
     // 수강신청 탭(검색&정렬 반영 후 목록 반영) : 전체 강의 목록 갱신
     private void reloadCourseList() {
-        try {
+        try { // 목록 갱신 성공 시
             service.loadCourseList(modelCourse, searchField.getText().trim(), (String) sortBox.getSelectedItem(), currentStudentNo);
         } catch (SQLException ex) {
         	// DB 쿼리 수행 중 에러 발생 시
@@ -241,13 +275,13 @@ public class StudentPanel extends JPanel {
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         String[] cols = {"학생번호", "학생아이디", "학생이름", "출결(오늘)"};
-        DefaultTableModel m = new DefaultTableModel(cols, 0) {
+        DefaultTableModel m = new DefaultTableModel(cols, 0) { // 테이블 모델 생성
             public boolean isCellEditable(int r, int c) { return false; } // 수정 불가
         };
         JTable t = new JTable(m);
         styleTableCenter(t); // 가운데 정렬
 
-        try {
+        try { // 출결 조회 성공 시
         	// StudentService에서 출결 데이터 불러옴
             service.loadAttendanceForLecture(m, lectureNo);
         } catch (SQLException ex) {
@@ -260,12 +294,12 @@ public class StudentPanel extends JPanel {
 
         // 하단 버튼
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton closeBtn = new JButton("닫기");
-        JButton refreshBtn = new JButton("갱신");
-        closeBtn.addActionListener(e -> dlg.dispose()); // 닫기 버튼 실행 이벤트
+        JButton closeBtn = new JButton("닫기"); // 닫기 버튼
+        JButton refreshBtn = new JButton("갱신"); // 갱신 버튼
+        closeBtn.addActionListener(e -> dlg.dispose()); // 닫기 버튼 실행 이벤트(다이얼로그 종료)
         refreshBtn.addActionListener(e -> { // 버튼 클릭 시 이벤트 처리
             dlg.dispose(); // 해당 프레임 종료(나머지 프레임 살아있음)
-            openAttendanceDialog(lectureNo, lectureName); // 갱신
+            openAttendanceDialog(lectureNo, lectureName); // 갱신(새로 열기)
         });
         bottom.add(refreshBtn);
         bottom.add(closeBtn);
@@ -280,7 +314,7 @@ public class StudentPanel extends JPanel {
         tbl.setRowHeight(26); // 테이블 높이 지정
         // 테이블 헤더의 기본 렌더러 가져와서 텍스트 가운데 정렬
         ((DefaultTableCellRenderer)tbl.getTableHeader().getDefaultRenderer()).setHorizontalAlignment(JLabel.CENTER);
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer(); // JTable로 각 셀을 표현하기 위한 표준 클래스
         center.setHorizontalAlignment(JLabel.CENTER);
         // 모든 컬럼에 렌더러 적용()
         for (int i = 0; i < tbl.getColumnCount(); i++) tbl.getColumnModel().getColumn(i).setCellRenderer(center);
@@ -288,14 +322,14 @@ public class StudentPanel extends JPanel {
     
     // main
     public static void main(String[] args) {
-    	SwingUtilities.invokeLater(() -> {
-//    		StudentFrame win = new StudentFrame(String memberId);
-    		Student win = new Student();
+    	SwingUtilities.invokeLater(() -> { // 모든 swing 관련 코드가 EDT(Event Dispatch Thread)에서 안전하게 실행되도록 사용
+    		// 학생 페이지 실행 
+    		StudentFrame win = new StudentFrame("testUser");
             win.setTitle("학생 페이지");
             win.setSize(1200, 800);
             win.setLocation(300, 100);
-            win.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            win.setVisible(true);
+            win.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 애플리케이션 완전히 종료
+            win.setVisible(true); // 생성된 GUI 컴포넌트 출력
         });
     }
 }

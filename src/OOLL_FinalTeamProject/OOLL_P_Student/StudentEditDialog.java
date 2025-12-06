@@ -1,6 +1,11 @@
 // 학생 - 개인정보 수정 창
 package OOLL_P_Student;
 
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Login.*;
+import OOLL_P_Manager.*;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -10,22 +15,6 @@ import java.sql.SQLException;
 // 비밀번호 변경은 오직 PasswordChangeDialog를 통해서만 수행
 public class StudentEditDialog extends JDialog {
     private boolean saved = false;
-
-    // 기간(교시) 입력에서 사용할 상수
-//    public static final String[] Period = {
-//            "1교시(09:00 ~ 09:50)",
-//            "2교시(10:00 ~ 10:50)",
-//            "3교시(11:00 ~ 11:50)",
-//            "4교시(13:00 ~ 13:50)",
-//            "5교시(14:00 ~ 14:50)",
-//            "6교시(15:00 ~ 15:50)",
-//            "7교시(16:00 ~ 16:50)",
-//            "8교시(17:00 ~ 17:50)",
-//            "9교시(19:00 ~ 19:50)",
-//            "10교시(20:00 ~ 20:50)",
-//            "11교시(21:00 ~ 21:50)",
-//            "12교시(22:00 ~ 22:50)"
-//    };
 
     public StudentEditDialog(Frame owner, StudentService service, String memberId) {
         super(owner, "개인정보 수정", true);

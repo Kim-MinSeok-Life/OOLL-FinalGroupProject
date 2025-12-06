@@ -1,6 +1,11 @@
 // 학생 - DB 데이터 처리 서비스 (개인정보, 강의목록, 수강신청 등)
 package OOLL_P_Student;
 
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Login.*;
+import OOLL_P_Manager.*;
+
 import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
