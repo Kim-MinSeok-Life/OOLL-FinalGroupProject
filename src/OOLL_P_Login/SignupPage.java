@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 //import OOLL_P_Teacher.*;
 import OOLL_P_Manager.*;
 
+import static OOLL_P_Manager.TeacherPanel.salaly;
+
 public class SignupPage extends JFrame {
 
     // 창 크기 상수
@@ -36,6 +38,7 @@ public class SignupPage extends JFrame {
     private GridBagConstraints gbc;
     private JPanel mainPanel;
     private int y = 0;
+    private DBConnect DBUtility;
 
     public SignupPage() {
         // 프레임 기본 설정
@@ -302,20 +305,27 @@ public class SignupPage extends JFrame {
             switch (role) {
                 case "원장":
                     sql = "INSERT INTO manager (member_id) VALUES (?)";
+                    pstmt = conn.prepareStatement(sql); // pstmt 초기화
+                    pstmt.setString(1, memberId);
                     break;
                 case "강사":
-                    sql = "INSERT INTO teacher (member_id, hourly_rate) VALUES (?, 30000)";
+                    int defaultRate = DBConnect.getLatestTeacherRate(conn); // DBConnect에 static으로 구현 가정
+                    sql = "INSERT INTO teacher (member_id, hourly_rate) VALUES (?, ?)";
+                    pstmt = conn.prepareStatement(sql); // pstmt 초기화
+                    pstmt.setString(1, memberId);
+                    pstmt.setInt(2, defaultRate);
                     break;
                 case "학생":
                     sql = "INSERT INTO student (member_id) VALUES (?)";
+                    pstmt = conn.prepareStatement(sql); // pstmt 초기화
+                    pstmt.setString(1, memberId);
                     break;
                 default:
                     return;
             }
-
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, memberId);
-            pstmt.executeUpdate();
+            if (pstmt != null) {
+                pstmt.executeUpdate();
+            }
 
         } finally {
             DBConnect.close(pstmt);
