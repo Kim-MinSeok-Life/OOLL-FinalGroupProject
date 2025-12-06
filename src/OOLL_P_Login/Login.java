@@ -1,4 +1,3 @@
-//로그인
 package OOLL_P_Login;
 import javax.swing.*;
 import java.awt.*;
@@ -9,9 +8,9 @@ import java.util.Arrays;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-//import OOLL_P_Student.*;
-//import OOLL_P_Teacher.*;
 import OOLL_P_Manager.*;
+// import OOLL_P_Student.*; // 현재 주석 처리됨
+// import OOLL_P_Teacher.*; // 현재 주석 처리됨
 
 public class Login extends JFrame {
 
@@ -44,7 +43,7 @@ public class Login extends JFrame {
         gbc.insets = new Insets(8, 0, 8, 0);
 
         // --- 로고 삽입 ---
-        JLabel logoLabel = createLogoLabel("logo.png");
+        JLabel logoLabel = createLogoLabel("/OOLL_P_Login/logo.jpg");
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(logoLabel, gbc);
 
@@ -123,7 +122,7 @@ public class Login extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 setVisible(false);
-                new FindIdPage().setVisible(true);
+                 new FindIdPage().setVisible(true);
             }
         });
 
@@ -150,14 +149,23 @@ public class Login extends JFrame {
 
         setVisible(true);
     }
-
     private JLabel createLogoLabel(String path) {
         try {
-            Image image = ImageIO.read(new File(path));
+            // **[수정된 부분]** new File 대신 getClass().getResource()를 사용하여 리소스를 로드합니다.
+            java.net.URL imageUrl = getClass().getResource(path);
+
+            if (imageUrl == null) {
+                // 이미지를 찾지 못했을 경우 예외 발생
+                throw new IOException("Resource not found: " + path);
+            }
+
+            Image image = ImageIO.read(imageUrl);
             Image resizedImage = image.getScaledInstance(50, 50, Image.SCALE_SMOOTH);
             return new JLabel(new ImageIcon(resizedImage));
+
         } catch (IOException e) {
-            System.err.println("Error loading logo.png: " + e.getMessage());
+            System.err.println("로고 파일을 로드하는 중 오류 발생 (파일 위치 확인): " + e.getMessage());
+            // 로고 로드 실패 시 대체 텍스트 표시
             JLabel label = new JLabel("[LOGO]");
             label.setPreferredSize(new Dimension(50, 50));
             return label;
@@ -180,6 +188,11 @@ public class Login extends JFrame {
             }
 
             conn = DBConnect.getConnection();
+
+            /*// 임시 DB 연결 (DBConnect 클래스가 없을 경우를 대비)
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC", "root", "java2025");
+            */
 
             String sql = "SELECT name, role FROM member WHERE member_id = ? AND password = ?";
             pstmt = conn.prepareStatement(sql);
@@ -222,22 +235,16 @@ public class Login extends JFrame {
             System.err.println("Unexpected Login Error: " + ex.getMessage());
             JOptionPane.showMessageDialog(this, "예상치 못한 오류가 발생했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
         } finally {
+            // DBConnect 클래스의 close 메서드를 사용할 수 없는 경우를 대비하여 직접 닫기
+            try {
+                if(rs!=null) rs.close();
+                if(pstmt!=null) pstmt.close();
+                if(conn!=null) conn.close();
+            } catch(Exception ex) {}
             DBConnect.close(rs, pstmt, conn);
             Arrays.fill(passwordChars, '0');
         }
     }
-
-    // UI 헬퍼 메소드 (createFieldRow에서 사용됨)
-    private JLabel createLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(smallFont);
-        return label;
-    }
-
-    private void createFieldRow(String labelText, JComponent field) {
-        GridBagConstraints gbc = new GridBagConstraints();
-    }
-
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
