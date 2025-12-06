@@ -2,6 +2,7 @@
 // DTO 클래스 -> 데이터를전송하기 위해 사용되는 객체 
 package OOLL_P_Student; // 패키지 선언
 
+// import 선언
 import OOLL_P_Student.*;
 import OOLL_P_Teacher.*;
 import OOLL_P_Login.*;

@@ -1,12 +1,13 @@
 // 학생 - 공통 유틸리티(전화번호 검증 기능)
 package OOLL_P_Student;
 
+// import 선언
+import javax.swing.JOptionPane;
+
 import OOLL_P_Student.*;
 import OOLL_P_Teacher.*;
 import OOLL_P_Login.*;
 import OOLL_P_Manager.*;
-
-import javax.swing.JOptionPane;
 
 public class Utils {
    

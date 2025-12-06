@@ -1,17 +1,17 @@
 // 학생 - 메인 화면 패널 (개인정보, 내 강의, 수강신청)
 package OOLL_P_Student; // 패키지 선언
 
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
-import OOLL_P_Login.*;
-import OOLL_P_Manager.*;
-
 // import 선언
 import javax.swing.*; // swing GUI(Graphical User Interface) 컴포넌트
 import javax.swing.table.*; // swing GUI 컴포넌트(JTable, TableModel 관련)
 import java.awt.*; // GUI를 위한 컴포넌트(Layout, Color, Dimension 등 관련)
 import java.awt.event.*; // 이벤트 처리
 import java.sql.SQLException; // DB 예외 처리
+
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Login.*;
+import OOLL_P_Manager.*;
 
 // 로그인한 학생의 메인화면을 구성하는 패널(개인정보 표시, 내 강의 조회, 수강신청 화면 구성)
 public class StudentPanel extends JPanel {
@@ -314,18 +314,5 @@ public class StudentPanel extends JPanel {
         center.setHorizontalAlignment(JLabel.CENTER);
         // 모든 컬럼에 렌더러 적용()
         for (int i = 0; i < tbl.getColumnCount(); i++) tbl.getColumnModel().getColumn(i).setCellRenderer(center);
-    }
-    
-    // main
-    public static void main(String[] args) {
-    	SwingUtilities.invokeLater(() -> { // 모든 swing 관련 코드가 EDT(Event Dispatch Thread)에서 안전하게 실행되도록 사용
-    		// 학생 페이지 실행 
-    		StudentFrame win = new StudentFrame("testUser");
-            win.setTitle("학생 페이지");
-            win.setSize(1200, 800);
-            win.setLocation(300, 100);
-            win.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 애플리케이션 완전히 종료
-            win.setVisible(true); // 생성된 GUI 컴포넌트 출력
-        });
     }
 }

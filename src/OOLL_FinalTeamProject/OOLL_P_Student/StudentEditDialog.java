@@ -1,15 +1,16 @@
 // 학생 - 개인정보 수정 창
 package OOLL_P_Student;
 
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
-import OOLL_P_Login.*;
-import OOLL_P_Manager.*;
-
+// import 선언
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
+
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Login.*;
+import OOLL_P_Manager.*;
 
 // 개인정보 수정 전용 다이얼로그(독립 클래스)
 // 비밀번호 변경은 오직 PasswordChangeDialog를 통해서만 수행

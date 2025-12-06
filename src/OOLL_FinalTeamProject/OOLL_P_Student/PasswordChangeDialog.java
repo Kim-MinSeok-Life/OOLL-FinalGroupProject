@@ -1,15 +1,16 @@
 // 학생 - 비밀번호 변경 창
 package OOLL_P_Student; // 패키지 선언
 
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
-import OOLL_P_Login.*;
-import OOLL_P_Manager.*;
-
+// import 선언
 import javax.swing.*; // swing GUI(Graphical User Interface) 컴포넌트
 import java.awt.*; // GUI를 위한 컴포넌트(Layout 등 관련)
 import java.awt.event.*; // 이벤트 처리
 import java.sql.SQLException; // DB 예외 처리
+
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Login.*;
+import OOLL_P_Manager.*;
 
 /* 비밀번호 변경 전용 다이얼로그(독립 클래스)
  * 현재 비밀번호 확인 후 변경

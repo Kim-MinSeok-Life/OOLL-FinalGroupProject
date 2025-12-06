@@ -1,6 +1,7 @@
 // 학생 - 공통 DB 연결 유틸 클래스
 package OOLL_P_Student; // 패키지 선언
 
+// import 선언
 import OOLL_P_Student.*;
 import OOLL_P_Teacher.*;
 import OOLL_P_Login.*;

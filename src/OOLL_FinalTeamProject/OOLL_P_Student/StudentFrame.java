@@ -1,13 +1,14 @@
 // 학생 - 메인 프레임(상단 로고, 로그아웃 포함)
 package OOLL_P_Student; // 패키지 선언
 
+// import 선언
+import javax.swing.*; // swing GUI(Graphical User Interface) 컴포넌트
+import java.awt.*; // GUI를 위한 컴포넌트(Layout, Color 등 관련)
+
 import OOLL_P_Student.*;
 import OOLL_P_Teacher.*;
 import OOLL_P_Login.*;
 import OOLL_P_Manager.*;
-
-import javax.swing.*; // swing GUI(Graphical User Interface) 컴포넌트
-import java.awt.*; // GUI를 위한 컴포넌트(Layout, Color 등 관련)
 
 public class StudentFrame extends JFrame {
     private String memberId; // 로그인한 학생 아이디
