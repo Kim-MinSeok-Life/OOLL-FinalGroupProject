@@ -1,7 +1,7 @@
-//회원가입
 package OOLL_P_Login;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -9,8 +9,8 @@ import java.util.Arrays;
 import java.awt.event.ActionEvent;
 import java.sql.*;
 import java.util.regex.Pattern;
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
+//import OOLL_P_Student.*;
+//import OOLL_P_Teacher.*;
 import OOLL_P_Manager.*;
 
 public class SignupPage extends JFrame {
@@ -49,6 +49,7 @@ public class SignupPage extends JFrame {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
+        // [초기화] GBC와 메인 패널 초기화 (createFieldRow 사용 전 필수)
         mainPanel = new JPanel();
         mainPanel.setLayout(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(PANEL_PADDING, PANEL_PADDING, PANEL_PADDING, PANEL_PADDING));
@@ -58,6 +59,7 @@ public class SignupPage extends JFrame {
         gbc.insets = new Insets(8, 0, 8, 0);
         gbc.gridx = 0;
         gbc.gridwidth = 2;
+
 
         // --- 1. 제목 영역 ---
         JLabel titleLabel = new JLabel("회원가입");
@@ -75,7 +77,7 @@ public class SignupPage extends JFrame {
         // --- 2. 입력 필드 그룹 배치 ---
 
         idField = new JTextField(20);
-        createFieldRow("아이디", idField);
+        createFieldRow("아이디", idField); // gbc, mainPanel 사용 시작
 
         passwordField = new JPasswordField(20);
         createFieldRow("비밀번호", passwordField);
@@ -204,7 +206,7 @@ public class SignupPage extends JFrame {
                 throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
             }
 
-            //비밀번호는 최소 8자 이상만 검사
+            // 비밀번호는 최소 8자 이상만 검사
             if (password.length() < 8) {
                 throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
             }
@@ -262,7 +264,6 @@ public class SignupPage extends JFrame {
             if (conn != null) try { conn.rollback(); } catch (SQLException rollbackEx) { rollbackEx.printStackTrace(); }
         } catch (SQLException ex) {
             System.err.println("DB Error: " + ex.getMessage());
-            // 트랜잭션 오류 발생 시 롤백 시도
             if (conn != null) try { conn.rollback(); } catch (SQLException rollbackEx) { rollbackEx.printStackTrace(); }
             JOptionPane.showMessageDialog(this, "데이터베이스 오류가 발생했습니다. (" + ex.getMessage().split("\n")[0] + ")", "시스템 오류", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
@@ -270,7 +271,6 @@ public class SignupPage extends JFrame {
             if (conn != null) try { conn.rollback(); } catch (SQLException rollbackEx) { rollbackEx.printStackTrace(); }
             JOptionPane.showMessageDialog(this, "예상치 못한 오류가 발생했습니다.", "시스템 오류", JOptionPane.ERROR_MESSAGE);
         } finally {
-            // DB 연결은 DBConnect.close() 내에서 안전하게 닫습니다.
             DBConnect.close(pstmt, conn);
             Arrays.fill(passwordChars, '0');
             Arrays.fill(confirmPwChars, '0');
@@ -289,8 +289,7 @@ public class SignupPage extends JFrame {
             rs = pstmt.executeQuery();
             return rs.next();
         } finally {
-            // 트랜잭션을 위해 conn은 닫지 않음.
-            DBConnect.close(rs, pstmt); // DBConnect에 이 오버로딩 버전이 있다고 가정합니다.
+            DBConnect.close(rs, pstmt);
         }
     }
 

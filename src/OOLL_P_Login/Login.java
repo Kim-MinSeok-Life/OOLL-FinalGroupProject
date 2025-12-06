@@ -1,8 +1,5 @@
 //로그인
 package OOLL_P_Login;
-
-import OOLL_P_Manager.TeacherManage;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -12,8 +9,8 @@ import java.util.Arrays;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
+//import OOLL_P_Student.*;
+//import OOLL_P_Teacher.*;
 import OOLL_P_Manager.*;
 
 public class Login extends JFrame {
@@ -202,12 +199,13 @@ public class Login extends JFrame {
 
                 switch (userRole) {
                     case "원장":
-                        new TeacherManage(id).setVisible(true);
+                        new ManagerMainFrame(id).setVisible(true);
+                        break;
                     case "강사":
-                        new TeacherMain(id).setVisible(true);
+                        // new TeacherMain(id).setVisible(true);
                         break;
                     case "학생":
-                        new StudentFrame(id).setVisible(true);
+                        // new StudentFrame(id).setVisible(true);
                         break;
                 }
 

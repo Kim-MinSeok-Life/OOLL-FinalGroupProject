@@ -6,8 +6,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.ResultSet;
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
+//import OOLL_P_Student.*;
+//import OOLL_P_Teacher.*;
 import OOLL_P_Manager.*;
 
 public class DBConnect {
