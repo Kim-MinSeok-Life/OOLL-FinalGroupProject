@@ -122,6 +122,9 @@ public class ManagerMainFrame extends JFrame implements ActionListener {
         tabPane.addTab("  강의 관리  ", new LecturePanel(this));
         tabPane.addTab("  학생 관리  ", new StudentPanel(this));
 
+        // 능이가 만든 강사 관리 탭 추가!
+        tabPane.addTab("  강사 관리  ", new TeacherPanel(this));
+
         add(northContainer, BorderLayout.NORTH);
         add(tabPane, BorderLayout.CENTER);
 
