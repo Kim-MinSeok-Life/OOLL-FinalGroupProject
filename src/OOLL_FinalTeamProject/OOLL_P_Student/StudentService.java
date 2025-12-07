@@ -308,8 +308,8 @@ public class StudentService {
         }
     }
 
-    // 오늘 출결 조회
-    public void loadAttendanceForLecture(DefaultTableModel model, int lectureNo) throws SQLException {
+    // 출결 조회
+    public void loadAttendanceForLecture(DefaultTableModel model, int lectureNo, LocalDate selectedDate) throws SQLException {
         model.setRowCount(0); // 초기화
         LocalDate today = LocalDate.now(); // 오늘 날짜
         String q = 
@@ -325,15 +325,15 @@ public class StudentService {
         try (Connection conn = DBUtil.getConnection(); // DB 연결
              PreparedStatement p = conn.prepareStatement(q)) { // SQL 준비
             p.setInt(1, lectureNo); // LEFT JOIN 조건(lectureNo)
-            p.setDate(2, Date.valueOf(today)); // LEFT JOIN 조건(오늘 날짜)
+            p.setDate(2, Date.valueOf(selectedDate)); // LEFT JOIN 조건(오늘 날짜)
             p.setInt(3, lectureNo); // WHERE e.lecture_no = ?
             try (ResultSet rs = p.executeQuery()) {
                 while (rs.next()) {
                     int sno = rs.getInt("student_no"); // 학생 번호
                     String mid = rs.getString("member_id"); // 회원 아이디
                     String nm = rs.getString("name"); // 이름
-                    Date attDate = rs.getDate("att_date");
-                    String dateStr = (attDate == null) ? "—" : attDate.toString();
+                    Date attDate = rs.getDate("att_date"); // 날짜
+                    String dateStr = (attDate == null) ? "—" : attDate.toString(); // 출결 미처리 시 "-" 출력
                     String status = rs.getString("attendance_status"); // 출결 상태
                     if (status == null) status = "미처리"; // 출결 미등록 시
                     model.addRow(new Object[]{sno, mid, nm, dateStr, status}); // JTable 모델에 추가

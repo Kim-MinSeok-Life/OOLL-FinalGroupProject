@@ -7,6 +7,7 @@ import javax.swing.table.*; // swing GUI 컴포넌트(JTable, TableModel 관련)
 import java.awt.*; // GUI를 위한 컴포넌트(Layout, Color, Dimension 등 관련)
 import java.awt.event.*; // 이벤트 처리
 import java.sql.SQLException; // DB 예외 처리
+import java.time.LocalDate; // 날짜 처리
 // 패키지별 클래스 전체 가져오기
 import OOLL_P_Student.*; // 학생 기능 관련 패키지 불러오기
 import OOLL_P_Teacher.*; // 강사 기능 관련 패키지 불러오기
@@ -123,7 +124,7 @@ public class StudentPanel extends JPanel {
                     if (r == -1) return; // 아무 행 선택되지 않을 때
                     int lectureNo = Integer.parseInt(tableMyClass.getValueAt(r, 0).toString()); // 숨겨둔 0번째 강의 번호 가져오기
                     String lectureName = tableMyClass.getValueAt(r, 1).toString(); // 1번째 강의명 가져오기
-                    openAttendanceDialog(lectureNo, lectureName); // 선택한 강의 번호와 이름을 전달하여 출결/수강생 조회 다이얼로그 열기
+                    openAttendanceDialog(lectureNo, lectureName, LocalDate.now()); // 선택한 강의 번호와 이름을 전달하여 출결/수강생 조회 다이얼로그 열기
             	}
             }
         });
@@ -261,14 +262,18 @@ public class StudentPanel extends JPanel {
         }
     }
 
- // 출결&수강생 조회 다이얼로그
-    private void openAttendanceDialog(int lectureNo, String lectureName) {
+    // 출결&수강생 조회 다이얼로그
+    private void openAttendanceDialog(int lectureNo, String lectureName, LocalDate selectedDate) {
     	// 모달 다이얼로그 생성
         JDialog dlg = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "수강생 / 출결 - " + lectureName + " (" + lectureNo + ")", true);
         dlg.setSize(700, 500);
         dlg.setLocationRelativeTo(this);
         dlg.setLayout(new BorderLayout());
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        
+        // 날짜 표시 라벨
+        JLabel lblDate = new JLabel("선택된 날짜: " + selectedDate.toString(), SwingConstants.CENTER);
+        dlg.add(lblDate, BorderLayout.NORTH);
 
         String[] cols = {"학생번호", "학생아이디", "학생이름", "날짜", "출결상태"};
         DefaultTableModel m = new DefaultTableModel(cols, 0) { // 테이블 모델 생성
@@ -279,7 +284,7 @@ public class StudentPanel extends JPanel {
 
         try { // 출결 조회 성공 시
         	// StudentService에서 출결 데이터 불러옴
-            service.loadAttendanceForLecture(m, lectureNo);
+        	service.loadAttendanceForLecture(m, lectureNo, selectedDate);
         } catch (SQLException ex) {
         	// DB 쿼리 수행 중 에러 발생 시
             ex.printStackTrace();
@@ -295,7 +300,7 @@ public class StudentPanel extends JPanel {
         closeBtn.addActionListener(e -> dlg.dispose()); // 닫기 버튼 실행 이벤트(다이얼로그 종료)
         refreshBtn.addActionListener(e -> { // 버튼 클릭 시 이벤트 처리
             dlg.dispose(); // 해당 프레임 종료(나머지 프레임 살아있음)
-            openAttendanceDialog(lectureNo, lectureName); // 갱신(새로 열기)
+            openAttendanceDialog(lectureNo, lectureName, selectedDate); // 갱신(새로 열기)
         });
         bottom.add(refreshBtn);
         bottom.add(closeBtn);
