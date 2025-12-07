@@ -75,7 +75,7 @@ public class StudentService {
         String q = "SELECT password FROM member WHERE member_id = ?";
         try (Connection conn = DBUtil.getConnection(); // DB 연결
              PreparedStatement p = conn.prepareStatement(q)) { // SQL 준비
-            p.setString(1, memberId);
+            p.setString(1, memberId); // 회원아이디 연결
             try (ResultSet r = p.executeQuery()) {
                 if (r.next()) { // 회원 존재 시
                     String stored = r.getString("password"); // DB에 저장된 비밀번호
