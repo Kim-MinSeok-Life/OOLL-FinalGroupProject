@@ -319,14 +319,12 @@ public class StudentService {
                 "JOIN member mb ON s.member_id = mb.member_id " +
                 "LEFT JOIN attendance a ON a.student_no = s.student_no " +
                 "    AND a.lecture_no = ? " +
-                "    AND a.att_date = ? " +
                 "WHERE e.lecture_no = ? " +
                 "  AND e.status = '수강중'";
         try (Connection conn = DBUtil.getConnection(); // DB 연결
              PreparedStatement p = conn.prepareStatement(q)) { // SQL 준비
             p.setInt(1, lectureNo); // LEFT JOIN 조건(lectureNo)
-            p.setDate(2, Date.valueOf(selectedDate)); // LEFT JOIN 조건(오늘 날짜)
-            p.setInt(3, lectureNo); // WHERE e.lecture_no = ?
+            p.setInt(2, lectureNo); // WHERE e.lecture_no = ?
             try (ResultSet rs = p.executeQuery()) {
                 while (rs.next()) {
                     int sno = rs.getInt("student_no"); // 학생 번호

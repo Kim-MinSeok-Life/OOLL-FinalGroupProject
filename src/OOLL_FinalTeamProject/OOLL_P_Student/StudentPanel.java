@@ -271,10 +271,6 @@ public class StudentPanel extends JPanel {
         dlg.setLayout(new BorderLayout());
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         
-        // 날짜 표시 라벨
-        JLabel lblDate = new JLabel("선택된 날짜: " + selectedDate.toString(), SwingConstants.CENTER);
-        dlg.add(lblDate, BorderLayout.NORTH);
-
         String[] cols = {"학생번호", "학생아이디", "학생이름", "날짜", "출결상태"};
         DefaultTableModel m = new DefaultTableModel(cols, 0) { // 테이블 모델 생성
             public boolean isCellEditable(int r, int c) { return false; } // 수정 불가
