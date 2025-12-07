@@ -35,7 +35,7 @@ public class StudentFrame extends JFrame {
         // System.out.println(getClass().getResource("logo.png")); // 이미지 경로 확인용 코드
         
         // 로고 이미지 크기 조정
-        Image img = icon.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+        Image img = icon.getImage().getScaledInstance(52, 55, Image.SCALE_SMOOTH);
         JLabel logoImgLabel = new JLabel(new ImageIcon(img));
 
         // 로고 텍스트 라벨
