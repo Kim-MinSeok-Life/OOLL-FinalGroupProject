@@ -138,8 +138,8 @@ public class StudentService {
 
         // 정렬: 요일 우선(DAY_ORDER), 동일 요일이면 시작 교시(start_period) 기준 오름차순
         temp.sort((a, b) -> {
-            String dayA = (String) a[3];
-            String dayB = (String) b[3];
+        	String dayA = ((String) a[3]).substring(0, 1);  // 첫 글자만 추출
+        	String dayB = ((String) b[3]).substring(0, 1);
             int idxA = DAY_ORDER.indexOf(dayA);
             int idxB = DAY_ORDER.indexOf(dayB);
             if (idxA == -1) idxA = 0;
