@@ -1,4 +1,3 @@
-//원장의 강사관리 화면
 package OOLL_P_Manager;
 
 import javax.swing.*;
@@ -20,6 +19,14 @@ public class TeacherPanel extends JPanel {
     private DefaultTableModel teacherTableModel;
     private final int PRICE_COLUMN_INDEX = 5;
     JFrame parentFrame; // 부모 프레임(주로 메인 프레임)을 저장하는 변수
+
+    // [검색 및 정렬 기능 추가 필드]
+    private JTextField searchField;
+    private JComboBox<String> sortComboBox;
+    private JButton sortDirectionButton;
+    private String currentSortColumn = "m.member_id"; // 기본 정렬 DB 컬럼
+    private String currentSortDirection = "ASC"; // 기본 정렬 방향
+    private final String[] DISPLAY_SORT_OPTIONS = {"아이디", "이름"};
 
     public TeacherPanel(JFrame parent) {
         this.parentFrame = parent;
@@ -79,9 +86,72 @@ public class TeacherPanel extends JPanel {
         subtitle.setBorder(new EmptyBorder(0, 0, 15, 0)); // 하단에 여백을 설정
         teacherSection.add(subtitle); // 부제목 레이블을 패널에 추가
 
+        // ------------------ [검색 & 정렬 기능 추가] ------------------
+        JPanel topControlsPanel = new JPanel();
+        topControlsPanel.setLayout(new BoxLayout(topControlsPanel, BoxLayout.X_AXIS)); // 가로로 정렬
+        topControlsPanel.setBackground(Color.WHITE);
+        topControlsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // 1. 정렬 컨트롤 패널
+        JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        sortPanel.setBackground(Color.WHITE);
+
+        JLabel sortLabel = new JLabel("정렬 기준:");
+        sortLabel.setFont(dataFont);
+        sortPanel.add(sortLabel);
+
+        sortComboBox = new JComboBox<>(DISPLAY_SORT_OPTIONS);
+        sortComboBox.setFont(dataFont);
+        sortComboBox.setPreferredSize(new Dimension(100, 25));
+        // 콤보박스 변경 시 정렬 실행
+        sortComboBox.addActionListener(e -> {
+            String selectedColumn = (String) sortComboBox.getSelectedItem();
+            currentSortColumn = getDbColumnName(selectedColumn);
+            // 현재 검색 키워드와 방향을 유지하며 테이블 갱신
+            refreshTableData(searchField.getText(), currentSortColumn, currentSortDirection);
+        });
+        sortPanel.add(sortComboBox);
+
+        // 정렬 방향 토글 버튼
+        sortDirectionButton = new JButton("▲"); // 오름차순 (ASC)
+        sortDirectionButton.setFont(buttonFont);
+        sortDirectionButton.setPreferredSize(new Dimension(40, 25));
+        sortDirectionButton.setMargin(new Insets(2, 2, 2, 2));
+        sortDirectionButton.setFocusPainted(false);
+        sortDirectionButton.addActionListener(e -> toggleSortDirection());
+        sortPanel.add(sortDirectionButton);
+
+        topControlsPanel.add(sortPanel);
+        topControlsPanel.add(Box.createHorizontalGlue()); // 정렬과 검색 사이에 공간 추가
+
+        // 2. 검색 컨트롤 패널 (기존 로직)
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        searchPanel.setBackground(Color.WHITE);
+
+        searchField = new JTextField(15);
+        searchField.setFont(dataFont);
+        searchField.setPreferredSize(new Dimension(150, 25));
+        searchField.addActionListener(e -> searchTeachers(searchField.getText())); // Enter 키 입력 시 검색 실행
+
+        JButton searchButton = new JButton("검색");
+        searchButton.setFont(buttonFont);
+        searchButton.setBackground(new Color(60, 179, 113));
+        searchButton.setForeground(Color.WHITE);
+        searchButton.setFocusPainted(false);
+        searchButton.addActionListener(e -> searchTeachers(searchField.getText())); // 버튼 클릭 시 검색 실행
+
+        searchPanel.add(new JLabel("강사 이름 검색: "));
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+
+        topControlsPanel.add(searchPanel);
+        teacherSection.add(topControlsPanel);
+        // ----------------------------------------------------
+
         // JTable 설정
         String[] columnNames = {"아이디", "이름", "이메일", "전화번호", "주소", "시간당 단가", "관리"}; // 테이블 열 이름들을 정의
-        Object[][] initialData = loadTeacherData(); // 데이터베이스에서 초기 강사 데이터를 로드
+        // 초기 로드 시 기본 정렬 기준 적용
+        Object[][] initialData = loadTeacherData(null, currentSortColumn, currentSortDirection);
 
         teacherTableModel = new DefaultTableModel(initialData, columnNames) { // 테이블 모델을 생성하고 데이터를 초기화
             @Override
@@ -108,16 +178,78 @@ public class TeacherPanel extends JPanel {
         return teacherSection;
     }
 
-    // [DB] 강사 데이터 로드
+    // [정렬 방향 토글 메서드]
+    private void toggleSortDirection() {
+        if (currentSortDirection.equals("ASC")) {
+            currentSortDirection = "DESC";
+            sortDirectionButton.setText("▼"); // 내림차순
+        } else {
+            currentSortDirection = "ASC";
+            sortDirectionButton.setText("▲"); // 오름차순
+        }
+
+        // 현재 검색 키워드를 유지하며 테이블 갱신
+        String currentKeyword = searchField != null ? searchField.getText() : null;
+        refreshTableData(currentKeyword, currentSortColumn, currentSortDirection);
+    }
+
+    // [정렬 기준 표시 이름 -> DB 컬럼 이름 매핑]
+    private String getDbColumnName(String displayColumn) {
+        return switch (displayColumn) {
+            case "아이디" -> "m.member_id";
+            case "이름" -> "m.name";
+            case "시간당 단가" -> "t.hourly_rate";
+            default -> "m.member_id"; // 기본값
+        };
+    }
+
+    // [검색 실행 메서드]
+    private void searchTeachers(String keyword) {
+        // currentSortColumn과 currentSortDirection은 클래스 필드 상태를 사용
+        if (keyword == null || keyword.trim().isEmpty()) {
+            refreshTableData(null, currentSortColumn, currentSortDirection);
+        } else {
+            refreshTableData(keyword.trim(), currentSortColumn, currentSortDirection);
+        }
+    }
+
+    // [JTable 데이터 갱신 메서드]
+    private void refreshTableData(String keyword, String orderByColumn, String orderDirection) {
+        Object[][] newTableData = loadTeacherData(keyword, orderByColumn, orderDirection);
+
+        // 기존 데이터를 모두 지웁니다.
+        teacherTableModel.setRowCount(0);
+
+        // 새 데이터를 추가합니다.
+        for (Object[] row : newTableData) {
+            teacherTableModel.addRow(row);
+        }
+
+        if (newTableData.length == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "검색 결과가 없습니다.",
+                    "알림",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    // [DB] 강사 데이터 로드 (검색 키워드 및 정렬 기준 적용)
     public static int salaly;
-    private Object[][] loadTeacherData() { // 데이터베이스에서 강사 정보를 불러오는 메서드
+    private Object[][] loadTeacherData(String keyword, String orderByColumn, String orderDirection) { // keyword와 정렬 기준을 추가로 받음
         Connection conn = null; // 데이터베이스 연결 객체
         PreparedStatement pstmt = null; // SQL 실행을 위한 객체
         ResultSet rs = null; // 쿼리 실행 결과(데이터)를 담는 객체
         List<Object[]> dataList = new ArrayList<>(); // 로드된 행 데이터를 저장할 리스트
 
-        // member 테이블과 teacher 테이블을 조인하여 역할이 '강사'인 멤버의 상세 정보를 조회하는 SQL 쿼리
         String sql = "SELECT m.member_id, m.name, m.email, m.phone, m.address, t.hourly_rate FROM member m JOIN teacher t ON m.member_id = t.member_id WHERE m.role = '강사'";
+
+        if (keyword != null && !keyword.isEmpty()) {
+            sql += " AND m.name LIKE ?";
+        }
+
+        // 정렬 기준 적용 (필수)
+        sql += " ORDER BY " + orderByColumn + " " + orderDirection;
+
 
         try {
             // DB 연결 정보
@@ -126,6 +258,11 @@ public class TeacherPanel extends JPanel {
             conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC", "root", "java2025");
 
             pstmt = conn.prepareStatement(sql); // SQL을 실행
+
+            if (keyword != null && !keyword.isEmpty()) {
+                pstmt.setString(1, "%" + keyword + "%"); // 이름 검색 키워드 설정
+            }
+
             rs = pstmt.executeQuery(); // SQL 쿼리를 실행하고 결과 받기
             while (rs.next()) { // 결과 집합의 다음 행이 있을 때까지 반복
                 salaly = rs.getInt("hourly_rate");
