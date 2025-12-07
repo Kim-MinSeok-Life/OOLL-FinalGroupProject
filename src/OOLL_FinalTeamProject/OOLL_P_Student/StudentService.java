@@ -312,7 +312,7 @@ public class StudentService {
     public void loadAttendanceForLecture(DefaultTableModel model, int lectureNo) throws SQLException {
         model.setRowCount(0); // 초기화
         LocalDate today = LocalDate.now(); // 오늘 날짜
-        String q = "SELECT s.student_no, mb.member_id, mb.name, a.attendance_status " +
+        String q = "SELECT s.student_no, mb.member_id, mb.name, a.att_date, a.attendance_status " +
                    "FROM enrollment e " +
                    "JOIN student s ON e.student_no = s.student_no " +
                    "JOIN member mb ON s.member_id = mb.member_id " +
@@ -328,6 +328,8 @@ public class StudentService {
                     int sno = rs.getInt("student_no"); // 학생 번호
                     String mid = rs.getString("member_id"); // 회원 아이디
                     String nm = rs.getString("name"); // 이름
+                    Date attDate = rs.getDate("att_date"); // 날짜
+                    String dateStr = (attDate == null) ? "—" : attDate.toString(); // 출결 미처리 시 "-" 표시
                     String status = rs.getString("attendance_status"); // 출결 상태
                     if (status == null) status = "미처리"; // 출결 미등록 시
                     model.addRow(new Object[]{sno, mid, nm, status}); // JTable 모델에 추가
