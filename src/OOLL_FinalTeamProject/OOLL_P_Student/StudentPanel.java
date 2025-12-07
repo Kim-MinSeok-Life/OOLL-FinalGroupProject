@@ -261,7 +261,7 @@ public class StudentPanel extends JPanel {
         }
     }
 
-    // 출결&수강생 조회 다이얼로그
+ // 출결&수강생 조회 다이얼로그
     private void openAttendanceDialog(int lectureNo, String lectureName) {
     	// 모달 다이얼로그 생성
         JDialog dlg = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "수강생 / 출결 - " + lectureName + " (" + lectureNo + ")", true);

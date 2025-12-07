@@ -312,27 +312,31 @@ public class StudentService {
     public void loadAttendanceForLecture(DefaultTableModel model, int lectureNo) throws SQLException {
         model.setRowCount(0); // 초기화
         LocalDate today = LocalDate.now(); // 오늘 날짜
-        String q = "SELECT s.student_no, mb.member_id, mb.name, a.att_date, a.attendance_status " +
-                   "FROM enrollment e " +
-                   "JOIN student s ON e.student_no = s.student_no " +
-                   "JOIN member mb ON s.member_id = mb.member_id " +
-                   "LEFT JOIN attendance a ON a.student_no = s.student_no AND a.lecture_no = ? AND a.att_date = ? " +
-                   "WHERE e.lecture_no = ? AND e.status = '수강중'";
+        String q = 
+                "SELECT s.student_no, mb.member_id, mb.name, a.att_date, a.attendance_status " +
+                "FROM enrollment e " +
+                "JOIN student s ON e.student_no = s.student_no " +
+                "JOIN member mb ON s.member_id = mb.member_id " +
+                "LEFT JOIN attendance a ON a.student_no = s.student_no " +
+                "    AND a.lecture_no = ? " +
+                "    AND a.att_date = ? " +
+                "WHERE e.lecture_no = ? " +
+                "  AND e.status = '수강중'";
         try (Connection conn = DBUtil.getConnection(); // DB 연결
              PreparedStatement p = conn.prepareStatement(q)) { // SQL 준비
-            p.setInt(1, lectureNo);
-            p.setDate(2, Date.valueOf(today));
-            p.setInt(3, lectureNo);
+            p.setInt(1, lectureNo); // LEFT JOIN 조건(lectureNo)
+            p.setDate(2, Date.valueOf(today)); // LEFT JOIN 조건(오늘 날짜)
+            p.setInt(3, lectureNo); // WHERE e.lecture_no = ?
             try (ResultSet rs = p.executeQuery()) {
                 while (rs.next()) {
                     int sno = rs.getInt("student_no"); // 학생 번호
                     String mid = rs.getString("member_id"); // 회원 아이디
                     String nm = rs.getString("name"); // 이름
-                    Date attDate = rs.getDate("att_date"); // 날짜
-                    String dateStr = (attDate == null) ? "—" : attDate.toString(); // 출결 미처리 시 "-" 표시
+                    Date attDate = rs.getDate("att_date");
+                    String dateStr = (attDate == null) ? "—" : attDate.toString();
                     String status = rs.getString("attendance_status"); // 출결 상태
                     if (status == null) status = "미처리"; // 출결 미등록 시
-                    model.addRow(new Object[]{sno, mid, nm, status}); // JTable 모델에 추가
+                    model.addRow(new Object[]{sno, mid, nm, dateStr, status}); // JTable 모델에 추가
                 }
             }
         }
