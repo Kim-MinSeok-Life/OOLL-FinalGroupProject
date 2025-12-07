@@ -118,7 +118,7 @@ public class StudentService {
              PreparedStatement p = conn.prepareStatement(sql)) { // SQL 준비
             p.setInt(1, studentNo); // studentNo 연결
             try (ResultSet rs = p.executeQuery()) {
-                while (rs.next()) { // 결과 
+                while (rs.next()) { // 결과 존재 시
                 	int start = rs.getInt("start_period"); // 시작 교시
                 	int end = rs.getInt("end_period"); // 종료 교시
                 	String period = Utils.getPeriodTitle(start) + " ~ " + Utils.getPeriodTitle(end); // 시간 문자열
