@@ -96,7 +96,7 @@ public class TeacherLectureCreate extends LectureFormBase {
 
             // 메인 화면의 강의 목록 다시 로딩
             if (owner != null) {
-                owner.refreshLectureList(); // ★ TeacherMain에 추가해야 하는 메소드 (아래 참고)
+                owner.refreshLectureList();
             }
 
             dispose(); // 창 닫기

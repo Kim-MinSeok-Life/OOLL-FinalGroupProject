@@ -7,81 +7,95 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
-// LectureDialog 클래스: 강좌 개설(INSERT) 및 수정(UPDATE)을 위한 팝업창입니다.
-// JDialog를 상속받아 모달 창으로 동작하며, ActionListener로 버튼 이벤트를 처리합니다.
+/**
+ * [LectureDialog 클래스]
+ * 역할: 신규 강좌를 개설(INSERT)하거나 기존 강좌 정보를 수정(UPDATE)하는 팝업창.
+ * 특징:
+ * 1. 월~일 요일 선택 기능 (체크박스).
+ * 2. 강의실/시간/강사 중복 여부를 DB에서 조회하여 방지하는 로직 포함.
+ * 3. 입력값 유효성 검사 (정원, 시간 순서 등) 적용.
+ */
 public class LectureDialog extends JDialog implements ActionListener {
 
-    // --- UI 컴포넌트 변수 선언 ---
-    JComboBox<String> subjectCombo;      // 과목 선택 (국어, 영어...)
-    JComboBox<TeacherItem> teacherCombo; // 강사 선택 (이름은 보이고 값은 번호를 가진 객체)
+    // --- [UI 컴포넌트 선언] ---
+    JComboBox<String> subjectCombo;      // 과목 선택 (국어, 영어 등)
+    JComboBox<TeacherItem> teacherCombo; // 강사 선택 (TeacherItem 객체 사용)
     JComboBox<String> roomCombo;         // 강의실 선택
-    JComboBox<String> startCombo;        // 시작 교시 선택
-    JComboBox<String> endCombo;          // 종료 교시 선택
-    JTextField capField;                 // 정원 입력창
-    JCheckBox[] dayChecks;               // 요일 선택 체크박스 배열 (월~금)
+    JComboBox<String> startCombo;        // 시작 교시
+    JComboBox<String> endCombo;          // 종료 교시
+    JTextField capField;                 // 수강 정원 입력
+    JCheckBox[] dayChecks;               // 요일 선택 체크박스 배열 (월~일)
 
-    JButton actionBtn, cancelBtn;        // 실행(개설/수정) 버튼, 취소 버튼
+    JButton actionBtn, cancelBtn;        // 등록/수정 버튼, 취소 버튼
 
-    // --- 상태 관리 변수 ---
-    String currentLectureNo = null;      // 수정 시 사용할 강의 번호(PK) 저장용
-    boolean isEditMode = false;          // 현재 모드가 '수정'인지 '개설'인지 구분하는 플래그
-    int currentEnrolledCount = 0;        // 수정 시, 정원을 현재 수강인원보다 적게 못 줄이게 하기 위한 변수
+    // --- [데이터 관리 변수] ---
+    String currentLectureNo = null;      // 수정 모드일 때, 대상 강의의 PK(번호)
+    boolean isEditMode = false;          // 현재 창이 '수정' 모드인지 '개설' 모드인지 판별
+    int currentEnrolledCount = 0;        // (수정 시) 현재 수강 중인 인원수 (정원 축소 제한용)
 
-    // 생성자: 팝업창을 초기화하고 UI를 그립니다.
-    // editData가 null이면 [개설 모드], 데이터가 있으면 [수정 모드]로 동작합니다.
+    /**
+     * [생성자]
+     * @param parent   : 부모 프레임
+     * @param title    : 창 제목
+     * @param editData : 수정할 데이터 배열 (null이면 개설 모드)
+     */
     public LectureDialog(JFrame parent, String title, String[] editData) {
-        super(parent, title, true); // true: 모달 창 (이 창을 닫기 전엔 뒤쪽 창 클릭 불가)
-        setSize(400, 480);          // 창 크기 설정
-        setLocationRelativeTo(parent); // 부모 창의 정중앙에 띄움
+        super(parent, title, true); // true: 모달(Modal) 창 설정 (이 창을 닫기 전엔 부모 창 제어 불가)
 
-        // 1. 모드 판별 (개설 vs 수정)
+        // ★ [UI 설정] 요일 체크박스가 7개(월~일)로 늘어남에 따라 가로 폭을 400 -> 550으로 확장
+        setSize(550, 480);
+        setLocationRelativeTo(parent); // 화면 정중앙 배치
+
+        // 1. 모드 판별 (데이터가 넘어왔으면 수정 모드)
         if (editData != null) {
-            isEditMode = true;           // 수정 모드로 설정
-            currentLectureNo = editData[0]; // 전달받은 데이터의 0번(PK)을 저장
+            isEditMode = true;
+            currentLectureNo = editData[0]; // PK 저장
 
-            // 만약 수강인원 데이터(7번 인덱스)가 있다면 파싱해서 저장 (정원 축소 제한용)
+            // 현재 수강 인원 파싱 (정원 유효성 검사 때 사용)
             if(editData.length > 7) {
                 currentEnrolledCount = Integer.parseInt(editData[7]);
             }
         }
 
-        // 2. UI 패널 구성
+        // 2. 메인 패널 구성 (전체 레이아웃)
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20)); // 전체 여백
+        mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20)); // 여백 설정
         mainPanel.setBackground(Color.WHITE);
 
-        // 입력 폼 패널 (2열 그리드 레이아웃: 라벨 - 입력창)
+        // 3. 입력 폼 패널 (2열 그리드)
         JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 15));
         formPanel.setBackground(Color.WHITE);
 
-        // (1) 과목명 콤보박스
+        // (1) 과목명
         formPanel.add(new JLabel("과목명:"));
         subjectCombo = new JComboBox<>(new String[]{"- 선택 -", "국어","영어","수학","과학","사회"});
         subjectCombo.setBackground(Color.WHITE);
         formPanel.add(subjectCombo);
 
-        // (2) 담당강사 콤보박스 (DB에서 불러옴)
+        // (2) 담당강사 (DB에서 목록 로드)
         formPanel.add(new JLabel("담당강사:"));
         teacherCombo = new JComboBox<>();
-        teacherCombo.addItem(new TeacherItem(0, "- 선택 -")); // 기본값 추가
-        loadTeacherList(); // ★ DB연동: 강사 목록을 DB에서 가져와 콤보박스에 채움
+        teacherCombo.addItem(new TeacherItem(0, "- 선택 -"));
+        loadTeacherList(); // ★ DB 연결하여 강사 목록 가져오기
         teacherCombo.setBackground(Color.WHITE);
         formPanel.add(teacherCombo);
 
-        // (3) 강의실 콤보박스 (고정 목록)
+        // (3) 강의실
         formPanel.add(new JLabel("강의실:"));
         String[] rooms = {"- 선택 -", "101호", "102호", "103호", "201호", "202호", "203호", "301호", "302호", "303호", "401호", "402호", "403호"};
         roomCombo = new JComboBox<>(rooms);
         roomCombo.setBackground(Color.WHITE);
         formPanel.add(roomCombo);
 
-        // (4) 요일 체크박스 (중복 선택 가능)
+        // (4) ★ [요일 체크박스] 월~일 7개 생성
         formPanel.add(new JLabel("요일(중복가능):"));
-        JPanel dayPanel = new JPanel(new GridLayout(1, 0, 0, 0)); // 체크박스를 한 줄에 배치
+        JPanel dayPanel = new JPanel(new GridLayout(1, 0, 0, 0)); // 한 줄에 배치
         dayPanel.setBackground(Color.WHITE);
-        String[] days = {"월", "화", "수", "목", "금"};
-        dayChecks = new JCheckBox[5]; // 5개의 체크박스 생성
-        for(int i=0; i<5; i++) {
+
+        String[] days = {"월", "화", "수", "목", "금", "토", "일"};
+        dayChecks = new JCheckBox[7]; // 배열 크기 7 할당
+
+        for(int i=0; i<7; i++) {
             dayChecks[i] = new JCheckBox(days[i]);
             dayChecks[i].setBackground(Color.WHITE);
             dayChecks[i].setMargin(new Insets(0, 0, 0, 0));
@@ -89,102 +103,99 @@ public class LectureDialog extends JDialog implements ActionListener {
         }
         formPanel.add(dayPanel);
 
-        // (5) 시작/종료 교시 콤보박스
+        // (5) 교시 선택
         String[] periods = {"- 선택 -", "1교시", "2교시", "3교시", "4교시", "5교시", "6교시", "7교시"};
         formPanel.add(new JLabel("시작교시:"));
         startCombo = new JComboBox<>(periods); startCombo.setBackground(Color.WHITE); formPanel.add(startCombo);
         formPanel.add(new JLabel("종료교시:"));
         endCombo = new JComboBox<>(periods); endCombo.setBackground(Color.WHITE); formPanel.add(endCombo);
 
-        // (6) 정원 입력창 (숫자만 입력)
+        // (6) 정원 입력
         formPanel.add(new JLabel("정원:")); capField = new JTextField("20"); formPanel.add(capField);
 
-        // 3. [수정 모드일 경우] 기존 데이터 채워넣기
+        // 4. [수정 모드일 경우] 기존 데이터로 UI 채우기 (Pre-fill)
         if (isEditMode) {
-            subjectCombo.setSelectedItem(editData[1]); // 과목 선택
+            subjectCombo.setSelectedItem(editData[1]); // 과목
 
-            // 강사 이름으로 콤보박스 항목 찾아서 선택
+            // 강사 이름 매칭하여 선택
             for (int i=0; i<teacherCombo.getItemCount(); i++) {
                 if (teacherCombo.getItemAt(i).toString().equals(editData[2])) {
                     teacherCombo.setSelectedIndex(i);
                     break;
                 }
             }
-            roomCombo.setSelectedItem(editData[3]); // 강의실 선택
+            roomCombo.setSelectedItem(editData[3]); // 강의실
 
-            // 요일 체크 ("월수금" 문자열에 해당 글자가 있으면 체크)
+            // ★ 요일 체크박스 복원 (DB 문자열 "월수" -> 월, 수 체크)
             String dayStr = editData[4];
-            for(int i=0; i<5; i++) {
+            for(int i=0; i<7; i++) {
                 if(dayStr.contains(dayChecks[i].getText())) dayChecks[i].setSelected(true);
             }
 
-            // 시간 설정 ("1-3교시" -> 분리해서 선택)
+            // 교시 복원 ("1-3교시" -> 1교시, 3교시)
             try {
                 String[] times = editData[5].replace("교시", "").split("-");
                 startCombo.setSelectedItem(times[0] + "교시");
                 endCombo.setSelectedItem(times[1] + "교시");
-            } catch (Exception e) {} // 파싱 에러 무시
+            } catch (Exception e) {}
 
-            capField.setText(editData[6]); // 정원 채움
+            capField.setText(editData[6]); // 정원
         }
 
-        // 4. 하단 버튼 패널 구성
+        // 5. 하단 버튼 패널
         JPanel btnPanel = new JPanel();
         btnPanel.setBackground(Color.WHITE);
         btnPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
 
-        // 모드에 따라 버튼 글씨 다르게 ("수정" or "개설")
         String btnText = isEditMode ? "수정" : "개설";
         actionBtn = new JButton(btnText);
         actionBtn.setBackground(Color.WHITE);
         actionBtn.setPreferredSize(new Dimension(80, 35));
-        actionBtn.addActionListener(this); // 리스너 연결
+        actionBtn.addActionListener(this);
 
         cancelBtn = new JButton("취소");
         cancelBtn.setBackground(Color.WHITE);
         cancelBtn.setPreferredSize(new Dimension(80, 35));
-        cancelBtn.addActionListener(this); // 리스너 연결
+        cancelBtn.addActionListener(this);
 
         btnPanel.add(actionBtn);
         btnPanel.add(cancelBtn);
 
+        // 패널 조립
         mainPanel.add(formPanel, BorderLayout.CENTER);
         mainPanel.add(btnPanel, BorderLayout.SOUTH);
         add(mainPanel);
     }
 
-    // ★ ActionListener 구현: 버튼 클릭 이벤트 처리
+    // ★ ActionListener 구현부
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == cancelBtn) {
-            dispose(); // 취소 시 창 닫기
+            dispose(); // 취소 시 닫기
         } else if (e.getSource() == actionBtn) {
-            // 실행(개설/수정) 버튼 클릭 시 로직
             try {
-                // 1. 입력값 검증 (빈칸, 논리 오류 등 체크) -> 문제시 예외 발생
+                // 1. [유효성 검사] 입력값이 올바른지 체크 (문제 시 예외 발생)
                 validateInputs();
 
-                // 2. UI 데이터 수집 및 가공
+                // 2. [데이터 수집] UI에서 값 가져오기
                 String subject = (String) subjectCombo.getSelectedItem();
                 TeacherItem selectedTeacher = (TeacherItem) teacherCombo.getSelectedItem();
                 String room = (String) roomCombo.getSelectedItem();
 
-                // "1교시" 문자열에서 "교시"를 제거하고 숫자로 변환 (DB 저장을 위해)
+                // "1교시" -> 1 (숫자 변환)
                 int start = Integer.parseInt(((String)startCombo.getSelectedItem()).replace("교시",""));
                 int end = Integer.parseInt(((String)endCombo.getSelectedItem()).replace("교시",""));
                 String capStr = capField.getText();
 
-                // 체크된 요일들을 문자열로 합침 (예: "월수금")
+                // 요일 문자열 생성 (체크된 것들만 합침. 예: "토일")
                 String dayStr = "";
                 for(JCheckBox box : dayChecks) if(box.isSelected()) dayStr += box.getText();
 
-                // 3. ★ 중복 체크 (DB 조회)
-                // 수정 모드일 경우, 자기 자신(PK)은 중복 검사에서 제외해야 함 (-1 or ID)
+                // 3. [중복 체크] DB에서 시간/장소/강사 충돌 확인
                 int excludeId = isEditMode ? Integer.parseInt(currentLectureNo) : -1;
-                // (강의실, 시간, 강사가 겹치는지 DB에서 확인 -> 겹치면 예외 던짐)
                 checkDatabaseConflicts(excludeId, selectedTeacher.no, room, dayStr, start, end);
 
-                // 4. DB 연결 및 저장 (모든 검사를 통과한 경우에만 실행됨)
+                // 4. [DB 저장] 모든 검사를 통과하면 실행
                 Connection con = null;
                 Statement stmt = null;
                 try {
@@ -193,13 +204,13 @@ public class LectureDialog extends JDialog implements ActionListener {
 
                     String sql;
                     if (isEditMode) {
-                        // 수정 모드: UPDATE 쿼리
+                        // 수정 (UPDATE)
                         sql = "UPDATE lecture SET subject_name='" + subject + "', teacher_no=" + selectedTeacher.no +
                                 ", classroom_name='" + room + "', day_of_week='" + dayStr +
                                 "', start_period=" + start + ", end_period=" + end + ", capacity=" + capStr +
                                 " WHERE lecture_no=" + currentLectureNo;
                     } else {
-                        // 개설 모드: INSERT 쿼리
+                        // 개설 (INSERT)
                         sql = "INSERT INTO lecture (subject_name, teacher_no, classroom_name, day_of_week, start_period, end_period, capacity) " +
                                 "VALUES ('" + subject + "', " + selectedTeacher.no + ", '" + room + "', '" + dayStr + "', " + start + ", " + end + ", " + capStr + ")";
                     }
@@ -219,7 +230,7 @@ public class LectureDialog extends JDialog implements ActionListener {
                 }
 
             } catch (InvalidInputException ex) {
-                // validateInputs()나 checkDatabaseConflicts()에서 던진 예외를 잡아서 경고창 띄움
+                // 검증 실패 시 경고창 표시
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "입력 오류", JOptionPane.WARNING_MESSAGE);
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -228,9 +239,9 @@ public class LectureDialog extends JDialog implements ActionListener {
         }
     }
 
-    // ★ [메소드] 입력값 유효성 검사 (문제가 있으면 예외를 던짐)
+    // ★ [유효성 검사 메소드] (throws Exception 패턴 적용)
     private void validateInputs() throws InvalidInputException {
-        // 콤보박스 선택 여부 확인 ("- 선택 -" 인 경우 에러)
+        // 필수 선택 체크
         if (subjectCombo.getSelectedIndex() == 0) throw new InvalidInputException("과목명을 선택해주세요.");
         TeacherItem item = (TeacherItem) teacherCombo.getSelectedItem();
         if (item == null || item.no == 0) throw new InvalidInputException("담당강사를 선택해주세요.");
@@ -238,12 +249,12 @@ public class LectureDialog extends JDialog implements ActionListener {
         if (startCombo.getSelectedIndex() == 0) throw new InvalidInputException("시작 교시를 선택해주세요.");
         if (endCombo.getSelectedIndex() == 0) throw new InvalidInputException("종료 교시를 선택해주세요.");
 
-        // 교시 논리 검사 (시작 > 종료 불가)
+        // 시간 논리 체크
         int s = Integer.parseInt(((String)startCombo.getSelectedItem()).replace("교시",""));
         int e = Integer.parseInt(((String)endCombo.getSelectedItem()).replace("교시",""));
         if (s > e) throw new InvalidInputException("시작 교시가 종료 교시보다 늦을 수 없습니다.");
 
-        // 정원 검사 (숫자 여부, 최소 인원 등)
+        // 정원 숫자 및 최소값 체크
         String capStr = capField.getText().trim();
         if (capStr.isEmpty()) throw new InvalidInputException("정원을 입력해주세요.");
         if (!capStr.matches("\\d+")) throw new InvalidInputException("정원은 숫자만 입력 가능합니다.");
@@ -251,19 +262,19 @@ public class LectureDialog extends JDialog implements ActionListener {
         int cap = Integer.parseInt(capStr);
         if (cap < 5) throw new InvalidInputException("정원은 최소 5명이어야 합니다.");
 
-        // ★ [중요] 수정 시, 현재 수강인원보다 정원을 적게 설정할 수 없음
+        // 수정 시 현재 수강인원보다 적게 줄일 수 없음
         if (isEditMode && cap < currentEnrolledCount) {
             throw new InvalidInputException("정원은 현재 수강인원(" + currentEnrolledCount + "명) 보다 적을 수 없습니다.");
         }
 
-        // 요일 체크 여부 (최소 하나는 체크해야 함)
+        // 요일 최소 1개 선택 체크
         boolean isDayChecked = false;
         for (JCheckBox box : dayChecks) if (box.isSelected()) isDayChecked = true;
         if (!isDayChecked) throw new InvalidInputException("요일을 최소 하나 이상 선택해주세요.");
     }
 
-    // ★ [메소드] 중복 강의 체크 (시간, 장소, 강사 충돌 확인)
-    // excludeId: 수정 시 자기 자신은 검사에서 제외하기 위한 ID
+    // ★ [중복 강의 체크 로직]
+    // DB에 있는 다른 강의들과 시간/장소/강사가 겹치는지 전수 조사
     private void checkDatabaseConflicts(int excludeId, int newTeacherNo, String newRoom, String newDays, int newStart, int newEnd) throws Exception {
         Connection con = null;
         Statement stmt = null;
@@ -272,7 +283,7 @@ public class LectureDialog extends JDialog implements ActionListener {
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection("jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC", "root", "java2025");
 
-            // 기존 모든 강의 정보 조회 (내 강의 제외)
+            // 내 강의(excludeId)를 제외한 모든 강의 조회
             String sql = "SELECT lecture_no, teacher_no, classroom_name, day_of_week, start_period, end_period FROM lecture WHERE lecture_no != " + excludeId;
             stmt = con.createStatement();
             rs = stmt.executeQuery(sql);
@@ -284,17 +295,17 @@ public class LectureDialog extends JDialog implements ActionListener {
                 int dbStart = rs.getInt("start_period");
                 int dbEnd = rs.getInt("end_period");
 
-                // 1. 요일이 겹치는지 확인 (문자열 포함 여부)
+                // 1. 요일 중복 여부 확인 (문자열 포함 관계)
                 boolean dayOverlap = false;
                 for(char c : newDays.toCharArray()) {
                     if(dbDays.indexOf(c) != -1) { dayOverlap = true; break; }
                 }
 
                 if (dayOverlap) {
-                    // 2. 시간대가 겹치는지 확인 (교시 범위 비교)
-                    // (새시작 <= 기존끝) AND (새끝 >= 기존시작) 공식 사용
+                    // 2. 교시 중복 여부 확인 (범위 교차 검사)
+                    // 공식: (새시작 <= 기존끝) AND (새끝 >= 기존시작)
                     if (newStart <= dbEnd && newEnd >= dbStart) {
-                        // 3. 강사가 같거나, 강의실이 같으면 충돌!
+                        // 3. 강사 중복 또는 강의실 중복 체크
                         if (newTeacherNo == dbTeacher) throw new InvalidInputException("해당 강사는 이미 수업이 있습니다.\n(" + dbDays + " " + dbStart + "-" + dbEnd + "교시)");
                         if (newRoom.equals(dbRoom)) throw new InvalidInputException("해당 강의실은 이미 사용 중입니다.\n(" + dbDays + " " + dbStart + "-" + dbEnd + "교시)");
                     }
@@ -303,7 +314,7 @@ public class LectureDialog extends JDialog implements ActionListener {
         } finally { if(rs!=null) rs.close(); if(stmt!=null) stmt.close(); if(con!=null) con.close(); }
     }
 
-    // [DB] 강사 목록 불러오기 (콤보박스 채우기용)
+    // [DB] 강사 목록 불러오기 (콤보박스용)
     private void loadTeacherList() {
         Connection con = null;
         Statement stmt = null;
@@ -311,30 +322,26 @@ public class LectureDialog extends JDialog implements ActionListener {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection("jdbc:mysql://localhost:3306/academy_lms?serverTimezone=UTC", "root", "java2025");
-            // teacher 테이블과 member 테이블을 조인하여 강사 번호와 이름을 가져옴
             String sql = "SELECT t.teacher_no, m.name FROM teacher t JOIN member m ON t.member_id = m.member_id ORDER BY m.name";
             stmt = con.createStatement();
             rs = stmt.executeQuery(sql);
             while(rs.next()) {
-                // TeacherItem 객체로 만들어서 콤보박스에 추가
                 teacherCombo.addItem(new TeacherItem(rs.getInt("teacher_no"), rs.getString("name")));
             }
         } catch (Exception e) {}
         finally { try { if(rs!=null) rs.close(); if(stmt!=null) stmt.close(); if(con!=null) con.close(); } catch(Exception ex) {} }
     }
 
-    // [내부 클래스] 사용자 정의 예외 (유효성 검증 실패 시 사용)
-    // static으로 선언하여 외부 클래스 인스턴스 없이도 사용 가능하게 함
+    // [예외 클래스] 사용자 정의 예외
     private static class InvalidInputException extends Exception {
         public InvalidInputException(String message) { super(message); }
     }
 
-    // [내부 클래스] 콤보박스용 강사 아이템
-    // 화면에는 이름(name)을 보여주고, 실제 값은 번호(no)를 사용하기 위함
+    // [헬퍼 클래스] 콤보박스 아이템 (보이는 건 이름, 값은 번호)
     class TeacherItem {
         int no; String name;
         public TeacherItem(int no, String name) { this.no = no; this.name = name; }
-        // 콤보박스는 toString()의 리턴값을 화면에 표시함
         @Override public String toString() { return name; }
     }
+
 }

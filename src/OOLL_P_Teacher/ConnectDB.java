@@ -47,7 +47,3 @@ public class ConnectDB {
     }
 }
 
-
-
-//            Statement dbSt = con.createStatement();
-//            System.out.println("JDBC 드라이버가 정상적으로 연결되었습니다.");

@@ -218,7 +218,7 @@ public class TeacherLectureEdit extends LectureFormBase {
             );
 
             if (owner != null) {
-                owner.refreshLectureList(); // ★ 수정 후 메인 테이블 다시 로딩
+                owner.refreshLectureList(); // 수정 후 메인 테이블 다시 로딩
             }
 
             dispose(); // 창 닫기
@@ -231,7 +231,7 @@ public class TeacherLectureEdit extends LectureFormBase {
         }
     }
 
-    // ===== actionPerformed 오버라이드 (지금은 기본 동작만 그대로 사용) =====
+    // actionPerformed 오버라이딩
     @Override
     public void actionPerformed(ActionEvent e) {
         // LectureFormBase의 actionPerformed에

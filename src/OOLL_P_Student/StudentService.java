@@ -19,9 +19,9 @@ public class StudentService {
 
     // 회원 + 학생 정보 조회
     public StudentInfo loadStudentInfo(String memberId) throws SQLException {
-        // 회원과 학생 테이블 JOIN하여 회원 정보와 학생 번호 조회
+    	// 회원과 학생 테이블 JOIN하여 회원 정보와 학생 번호 조회
         String sql = "SELECT m.member_id, m.name, m.email, m.phone, m.address, s.student_no " +
-                "FROM member m LEFT JOIN student s ON m.member_id = s.member_id WHERE m.member_id = ?";
+                     "FROM member m LEFT JOIN student s ON m.member_id = s.member_id WHERE m.member_id = ?";
         try (Connection conn = DBUtil.getConnection(); // DB 연결
              PreparedStatement p = conn.prepareStatement(sql)) { // SQL 준비
             p.setString(1, memberId); // 회원아이디 연결
@@ -60,7 +60,7 @@ public class StudentService {
         String sql = "UPDATE member SET name = ?, phone = ?, address = ?, email = ? WHERE member_id = ?";
         try (Connection conn = DBUtil.getConnection(); // DB 연결
              PreparedStatement p = conn.prepareStatement(sql)) { // SQL 준비
-            p.setString(1, name); // 이름
+        	p.setString(1, name); // 이름
             p.setString(2, phone); // 연락처
             p.setString(3, address); // 주소
             p.setString(4, email); // 이메일
@@ -71,7 +71,7 @@ public class StudentService {
 
     // 비밀번호 변경(현재 비밀번호 확인 후 업데이트)
     public boolean changePassword(String memberId, String currentPw, String newPw) throws SQLException {
-        // DB에서 회원 비밀번호 조회
+    	// DB에서 회원 비밀번호 조회
         String q = "SELECT password FROM member WHERE member_id = ?";
         try (Connection conn = DBUtil.getConnection(); // DB 연결
              PreparedStatement p = conn.prepareStatement(q)) { // SQL 준비
@@ -104,14 +104,14 @@ public class StudentService {
 
         // 수강중인 강의 조회(강의, 강사, 요일, 교시, 강의실, 현재 인원)
         String sql =
-                "SELECT l.lecture_no, l.subject_name, mb.name AS teacher_name, " +
-                        "l.day_of_week AS weekday, l.start_period, l.end_period, " +
-                        "l.classroom_name AS room, l.enrolled_count AS current_count " +
-                        "FROM enrollment e " +
-                        "JOIN lecture l ON e.lecture_no = l.lecture_no " +
-                        "JOIN teacher t ON l.teacher_no = t.teacher_no " +
-                        "JOIN member mb ON t.member_id = mb.member_id " +
-                        "WHERE e.student_no = ? AND e.status = '수강중'";
+        	    "SELECT l.lecture_no, l.subject_name, mb.name AS teacher_name, " +
+        	    "l.day_of_week AS weekday, l.start_period, l.end_period, " +
+        	    "l.classroom_name AS room, l.enrolled_count AS current_count " +
+        	    "FROM enrollment e " +
+        	    "JOIN lecture l ON e.lecture_no = l.lecture_no " +
+        	    "JOIN teacher t ON l.teacher_no = t.teacher_no " +
+        	    "JOIN member mb ON t.member_id = mb.member_id " +
+        	    "WHERE e.student_no = ? AND e.status = '수강중'";
 
         List<Object[]> temp = new ArrayList<>(); // 임시 저장 리스트
         try (Connection conn = DBUtil.getConnection(); // DB 연결
@@ -119,18 +119,18 @@ public class StudentService {
             p.setInt(1, studentNo); // studentNo 연결
             try (ResultSet rs = p.executeQuery()) {
                 while (rs.next()) { // 결과 존재 시
-                    int start = rs.getInt("start_period"); // 시작 교시
-                    int end = rs.getInt("end_period"); // 종료 교시
-                    String period = Utils.getPeriodTitle(start) + " ~ " + Utils.getPeriodTitle(end); // 시간 문자열
-                    Object[] row = new Object[]{
-                            rs.getInt("lecture_no"),		// 강의 번호
-                            rs.getString("subject_name"),  // 과목명
-                            rs.getString("teacher_name"),  // 강사명
-                            rs.getString("weekday"),    	// 요일
-                            period, 						// 시간
-                            rs.getString("room"),          // 강의실
-                            rs.getInt("current_count")     // 현재 정원
-                    };
+                	int start = rs.getInt("start_period"); // 시작 교시
+                	int end = rs.getInt("end_period"); // 종료 교시
+                	String period = Utils.getPeriodTitle(start) + " ~ " + Utils.getPeriodTitle(end); // 시간 문자열
+                	Object[] row = new Object[]{
+                			 rs.getInt("lecture_no"),		// 강의 번호
+                             rs.getString("subject_name"),  // 과목명
+                             rs.getString("teacher_name"),  // 강사명
+                             rs.getString("weekday"),    	// 요일
+                             period, 						// 시간
+                             rs.getString("room"),          // 강의실
+                             rs.getInt("current_count")     // 현재 정원
+                     };
                     temp.add(row); // 임시 리스트에 추가
                 }
             }
@@ -138,8 +138,8 @@ public class StudentService {
 
         // 정렬: 요일 우선(DAY_ORDER), 동일 요일이면 시작 교시(start_period) 기준 오름차순
         temp.sort((a, b) -> {
-            String dayA = ((String) a[3]).substring(0, 1);  // 첫 글자만 추출
-            String dayB = ((String) b[3]).substring(0, 1);
+        	String dayA = ((String) a[3]).substring(0, 1);  // 첫 글자만 추출
+        	String dayB = ((String) b[3]).substring(0, 1);
             int idxA = DAY_ORDER.indexOf(dayA);
             int idxB = DAY_ORDER.indexOf(dayB);
             if (idxA == -1) idxA = 0;
@@ -166,8 +166,8 @@ public class StudentService {
     public void loadCourseList(DefaultTableModel model, String keyword, String sortOption, int studentNo) throws SQLException {
         model.setRowCount(0); // 모델 초기화
         String base = "SELECT l.subject_name, l.enrolled_count, mb.name as teacher_name, l.lecture_no, l.day_of_week, l.start_period, l.end_period, l.classroom_name, l.capacity " +
-                "FROM lecture l JOIN teacher t ON l.teacher_no = t.teacher_no JOIN member mb ON t.member_id = mb.member_id " +
-                "WHERE (l.subject_name LIKE ? OR mb.name LIKE ?)";
+                      "FROM lecture l JOIN teacher t ON l.teacher_no = t.teacher_no JOIN member mb ON t.member_id = mb.member_id " +
+                      "WHERE (l.subject_name LIKE ? OR mb.name LIKE ?)";
 
         // 수강중인 강의 제외
         if (studentNo != -1) {
@@ -271,7 +271,7 @@ public class StudentService {
                 p3.setInt(1, studentNo);
                 try (ResultSet r3 = p3.executeQuery()) {
                     while (r3.next()) {
-                        String d = r3.getString("day_of_week");		// 기존 강의 요일
+                        String d = r3.getString("day_of_week");		// 기존 강의 요일 
                         int s = r3.getInt("start_period");			// 시작 교시
                         int ee = r3.getInt("end_period");			// 종료 교시
                         if (d.equalsIgnoreCase(day)) { // 동일 요일이면
@@ -302,47 +302,51 @@ public class StudentService {
             conn.commit(); // 트랜잭션 커밋
             return "성공";
         } catch (SQLException ex) {
-            // DB 쿼리 수행 중 에러 발생 시
+        	// DB 쿼리 수행 중 에러 발생 시
             ex.printStackTrace(); // 오류 로그 출력
             return "수강신청 중 오류: " + ex.getMessage();
         }
     }
 
-    // 오늘 출결 조회
-    public void loadAttendanceForLecture(DefaultTableModel model, int lectureNo) throws SQLException {
+    // 출결 조회
+    public void loadAttendanceForLecture(DefaultTableModel model, int lectureNo, LocalDate selectedDate) throws SQLException {
         model.setRowCount(0); // 초기화
         LocalDate today = LocalDate.now(); // 오늘 날짜
-        String q = "SELECT s.student_no, mb.member_id, mb.name, a.attendance_status " +
+        String q = 
+                "SELECT s.student_no, mb.member_id, mb.name, a.att_date, a.attendance_status " +
                 "FROM enrollment e " +
                 "JOIN student s ON e.student_no = s.student_no " +
                 "JOIN member mb ON s.member_id = mb.member_id " +
-                "LEFT JOIN attendance a ON a.student_no = s.student_no AND a.lecture_no = ? AND a.att_date = ? " +
-                "WHERE e.lecture_no = ? AND e.status = '수강중'";
+                "LEFT JOIN attendance a ON a.student_no = s.student_no " +
+                "    AND a.lecture_no = ? " +
+                "WHERE e.lecture_no = ? " +
+                "  AND e.status = '수강중'";
         try (Connection conn = DBUtil.getConnection(); // DB 연결
              PreparedStatement p = conn.prepareStatement(q)) { // SQL 준비
-            p.setInt(1, lectureNo);
-            p.setDate(2, Date.valueOf(today));
-            p.setInt(3, lectureNo);
+            p.setInt(1, lectureNo); // LEFT JOIN 조건(lectureNo)
+            p.setInt(2, lectureNo); // WHERE e.lecture_no = ?
             try (ResultSet rs = p.executeQuery()) {
                 while (rs.next()) {
                     int sno = rs.getInt("student_no"); // 학생 번호
                     String mid = rs.getString("member_id"); // 회원 아이디
                     String nm = rs.getString("name"); // 이름
+                    Date attDate = rs.getDate("att_date"); // 날짜
+                    String dateStr = (attDate == null) ? "—" : attDate.toString(); // 출결 미처리 시 "-" 출력
                     String status = rs.getString("attendance_status"); // 출결 상태
                     if (status == null) status = "미처리"; // 출결 미등록 시
-                    model.addRow(new Object[]{sno, mid, nm, status}); // JTable 모델에 추가
+                    model.addRow(new Object[]{sno, mid, nm, dateStr, status}); // JTable 모델에 추가
                 }
             }
         }
     }
-
+    
     // 강의 삭제(수강 취소)
     public boolean deleteLecture(int studentNo, int lectureNo) throws SQLException {
         if (studentNo == -1) return false; // 학생 정보 없음
 
         String deleteEnrollment = "DELETE FROM enrollment WHERE student_no = ? AND lecture_no = ?";
-        String updateLecture =
-                "UPDATE lecture SET enrolled_count = GREATEST(enrolled_count - 1, 0) WHERE lecture_no = ?";
+        String updateLecture = 
+            "UPDATE lecture SET enrolled_count = GREATEST(enrolled_count - 1, 0) WHERE lecture_no = ?";
 
         try (Connection conn = DBUtil.getConnection()) { // DB 연결
             conn.setAutoCommit(false); // 트랜잭션 시작
@@ -367,7 +371,7 @@ public class StudentService {
                 conn.commit(); // 트랜잭션 커밋
                 return true;
             } catch (SQLException ex) {
-                // DB 쿼리 수행 중 에러 발생 시
+            	// DB 쿼리 수행 중 에러 발생 시
                 conn.rollback(); // 롤백
                 throw ex; // 예외 다시 던짐
             }

@@ -195,13 +195,18 @@ public class TeacherPanel extends JPanel {
 
     // [정렬 기준 표시 이름 -> DB 컬럼 이름 매핑]
     private String getDbColumnName(String displayColumn) {
-        return switch (displayColumn) {
-            case "아이디" -> "m.member_id";
-            case "이름" -> "m.name";
-            case "시간당 단가" -> "t.hourly_rate";
-            default -> "m.member_id"; // 기본값
-        };
+        switch (displayColumn) {
+            case "아이디":
+                return "m.member_id";
+            case "이름":
+                return "m.name";
+            case "시간당 단가":
+                return "t.hourly_rate";
+            default:
+                return "m.member_id";
+        }
     }
+
 
     // [검색 실행 메서드]
     private void searchTeachers(String keyword) {

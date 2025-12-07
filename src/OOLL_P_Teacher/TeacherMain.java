@@ -4,7 +4,7 @@ package OOLL_P_Teacher; // 패키지 선언
 import OOLL_P_Student.*; // 학생 패키지 import (필요시)
 import OOLL_P_Teacher.*; // 동일 패키지 내 다른 클래스 import (필요시)
 import OOLL_P_Login.*;   // 로그인 패키지 import (Login 클래스 사용)
-import OOLL_P_Manager.*; // 원장 패키지 import (필요시)
+import OOLL_P_Manager.*; // 원장 패키지
 
 import java.awt.*;           // 레이아웃, Color 등 AWT 관련 클래스 import
 import java.awt.event.*;     // ActionListener, MouseListener 등 이벤트 관련 클래스 import
@@ -12,14 +12,13 @@ import java.sql.*;           // JDBC 사용할 때 필요한 java.sql 패키지 
 import javax.swing.*;        // 스윙 컴포넌트 사용
 import javax.swing.table.DefaultTableModel; // JTable용 테이블 모델 사용
 import java.util.*;          // List, ArrayList 등 사용
-
 import javax.swing.table.TableCellRenderer; // 셀 렌더러 인터페이스 사용
 
 public class TeacherMain extends JFrame implements ActionListener { // JFrame 상속 + 버튼 액션 처리 위해 ActionListener 구현
 
     // ======== 선언부 ========
     // ==== 데이터 값 =====
-    private String userId;              // 아이디 [데이터값]
+    private String userId;             // 아이디 [데이터값]
     private String password;           // 비밀번호 [데이터값]
     private String name;               // 이름 [데이터값]
     private String addressData;        // 주소 [데이터값]
@@ -113,7 +112,7 @@ public class TeacherMain extends JFrame implements ActionListener { // JFrame �
         setVisible(true);                                 // 프레임 보이기
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);   // 종료 시 프로세스 종료
 
-        Container ct = getContentPane();                  // 컨텐트팬 얻기
+        Container ct = getContentPane();                 
         ct.setBackground(new Color(0xF5, 0xF5, 0xF5));    // 전체 배경색 연한 회색
         ct.setLayout(new BorderLayout());                 // BorderLayout 사용
 
@@ -133,8 +132,8 @@ public class TeacherMain extends JFrame implements ActionListener { // JFrame �
         lecturePanel.setBackground(Color.WHITE);          // 카드 배경 흰색
         lecturePanel.setBorder(                          // 테두리 + 안쪽 여백
                 BorderFactory.createCompoundBorder(
-                        BorderFactory.createTitledBorder("담당강의"),      // 타이틀
-                        BorderFactory.createEmptyBorder(10, 10, 10, 10)  // 안쪽 여백
+                BorderFactory.createTitledBorder("담당강의"),      // 타이틀
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)  // 안쪽 여백
                 )
         );
 
@@ -231,7 +230,7 @@ public class TeacherMain extends JFrame implements ActionListener { // JFrame �
         profileLeftPanel.add(profileTextPanel);           // 텍스트 묶음
 
         profileEditBtn = new JButton("개인정보 수정");    // 개인정보 수정 버튼
-        profileRightPanel.add(profileEditBtn);            // 우측 패널에 버튼 추가
+        profileRightPanel.add(profileEditBtn);        // 우측 패널에 버튼 추가
 
         profilePanel.add(profileLeftPanel, BorderLayout.WEST); // 좌측에 프로필 내용
         profilePanel.add(profileRightPanel, BorderLayout.EAST); // 우측에 버튼
