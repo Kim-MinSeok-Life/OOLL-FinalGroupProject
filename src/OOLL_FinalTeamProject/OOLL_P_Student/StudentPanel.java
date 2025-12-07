@@ -7,11 +7,11 @@ import javax.swing.table.*; // swing GUI 컴포넌트(JTable, TableModel 관련)
 import java.awt.*; // GUI를 위한 컴포넌트(Layout, Color, Dimension 등 관련)
 import java.awt.event.*; // 이벤트 처리
 import java.sql.SQLException; // DB 예외 처리
-
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
-import OOLL_P_Login.*;
-import OOLL_P_Manager.*;
+// 패키지별 클래스 전체 가져오기
+import OOLL_P_Student.*; // 학생 기능 관련 패키지 불러오기
+import OOLL_P_Teacher.*; // 강사 기능 관련 패키지 불러오기
+import OOLL_P_Login.*; // 로그인 기능 관련 패키지 불러오기
+import OOLL_P_Manager.*; // 관리자 기능 관련 패키지 불러오기
 
 // 로그인한 학생의 메인화면을 구성하는 패널(개인정보 표시, 내 강의 조회, 수강신청 화면 구성)
 public class StudentPanel extends JPanel {
@@ -101,7 +101,7 @@ public class StudentPanel extends JPanel {
 
         // 내 강의 탭(학생이 현재 수강중인 강의)
         JPanel myClassPanel = new JPanel(new BorderLayout());
-        String[] myClassHeader = {"강의번호", "과목명", "담당강사", "요일", "시간", "강의실", "현재 정원"}; // 학생이 필요한 정보만 표시(강의번호 숨기기)
+        String[] myClassHeader = {"강의번호", "과목명", "담당강사", "요일", "교시", "강의실", "현재 정원"}; // 학생이 필요한 정보만 표시(강의번호 숨기기)
         modelMyClass = new DefaultTableModel(myClassHeader, 0) {
             public boolean isCellEditable(int r, int c) { return false; } // 수정 불가
         };
@@ -172,7 +172,7 @@ public class StudentPanel extends JPanel {
         searchPanel.add(sortBox);
 
         // 전체 강의 목록 테이블
-        String[] courseHeader = {"과목명", "현재인원", "담당강사", "강의번호", "요일", "시간", "강의실", "정원"};
+        String[] courseHeader = {"과목명", "현재인원", "담당강사", "강의번호", "요일", "교시", "강의실", "정원"};
         modelCourse = new DefaultTableModel(courseHeader, 0) {
             public boolean isCellEditable(int r, int c) { return false; } // 수정 불가
         };

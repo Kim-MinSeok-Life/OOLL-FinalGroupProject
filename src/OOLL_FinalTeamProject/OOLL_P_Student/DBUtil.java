@@ -2,12 +2,12 @@
 package OOLL_P_Student; // 패키지 선언
 
 // import 선언
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
-import OOLL_P_Login.*;
-import OOLL_P_Manager.*;
-
 import java.sql.*;
+// 패키지별 클래스 전체 가져오기
+import OOLL_P_Student.*; // 학생 기능 관련 패키지 불러오기
+import OOLL_P_Teacher.*; // 강사 기능 관련 패키지 불러오기
+import OOLL_P_Login.*; // 로그인 기능 관련 패키지 불러오기
+import OOLL_P_Manager.*; // 관리자 기능 관련 패키지 불러오기
 
 public class DBUtil {
 	// MySQL DB 연결을 생성해 반환하는 메소드

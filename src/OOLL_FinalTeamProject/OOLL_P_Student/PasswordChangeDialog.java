@@ -6,11 +6,11 @@ import javax.swing.*; // swing GUI(Graphical User Interface) 컴포넌트
 import java.awt.*; // GUI를 위한 컴포넌트(Layout 등 관련)
 import java.awt.event.*; // 이벤트 처리
 import java.sql.SQLException; // DB 예외 처리
-
-import OOLL_P_Student.*;
-import OOLL_P_Teacher.*;
-import OOLL_P_Login.*;
-import OOLL_P_Manager.*;
+// 패키지별 클래스 전체 가져오기
+import OOLL_P_Student.*; // 학생 기능 관련 패키지 불러오기
+import OOLL_P_Teacher.*; // 강사 기능 관련 패키지 불러오기
+import OOLL_P_Login.*; // 로그인 기능 관련 패키지 불러오기
+import OOLL_P_Manager.*; // 관리자 기능 관련 패키지 불러오기
 
 /* 비밀번호 변경 전용 다이얼로그(독립 클래스)
  * 현재 비밀번호 확인 후 변경
