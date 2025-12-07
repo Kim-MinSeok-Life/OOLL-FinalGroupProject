@@ -42,8 +42,8 @@ public class LectureDialog extends JDialog implements ActionListener {
     public LectureDialog(JFrame parent, String title, String[] editData) {
         super(parent, title, true); // true: 모달(Modal) 창 설정 (이 창을 닫기 전엔 부모 창 제어 불가)
 
-        // ★ [UI 설정] 요일 체크박스가 7개(월~일)로 늘어남에 따라 가로 폭을 400 -> 480으로 확장
-        setSize(480, 480);
+        // ★ [UI 설정] 요일 체크박스가 7개(월~일)로 늘어남에 따라 가로 폭을 400 -> 550으로 확장
+        setSize(550, 480);
         setLocationRelativeTo(parent); // 화면 정중앙 배치
 
         // 1. 모드 판별 (데이터가 넘어왔으면 수정 모드)
@@ -343,4 +343,5 @@ public class LectureDialog extends JDialog implements ActionListener {
         public TeacherItem(int no, String name) { this.no = no; this.name = name; }
         @Override public String toString() { return name; }
     }
+
 }
