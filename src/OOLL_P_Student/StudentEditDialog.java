@@ -1,0 +1,147 @@
+// 학생 - 개인정보 수정 창
+package OOLL_P_Student;
+
+// import 선언
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.SQLException;
+
+import OOLL_P_Student.*;
+import OOLL_P_Teacher.*;
+import OOLL_P_Login.*;
+import OOLL_P_Manager.*;
+
+// 개인정보 수정 전용 다이얼로그(독립 클래스)
+// 비밀번호 변경은 오직 PasswordChangeDialog를 통해서만 수행
+public class StudentEditDialog extends JDialog {
+    private boolean saved = false;
+
+    public StudentEditDialog(Frame owner, StudentService service, String memberId) {
+        super(owner, "개인정보 수정", true);
+        setLayout(new GridBagLayout());
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(8, 8, 8, 8); // 여백
+        g.fill = GridBagConstraints.HORIZONTAL;
+
+        // 필드 생성
+        JTextField idField = new JTextField(15);
+        idField.setEditable(false); // 아이디 수정 불가
+        JPasswordField currentPwField = new JPasswordField(15);
+        currentPwField.setEditable(false); // 현재 필드 수정 불가능(버튼 클릭 시 수정 가능)
+        JTextField nameField = new JTextField(15);
+        JTextField phoneField = new JTextField(15);
+        JTextField emailField = new JTextField(20);
+        JTextField addressField = new JTextField(25);
+
+        // 초기 데이터 로드
+        try {
+            StudentInfo info = service.loadStudentInfo(memberId);
+            if (info != null) {
+                idField.setText(info.memberId);
+                nameField.setText(info.name);
+                phoneField.setText(info.phone);
+                addressField.setText(info.address);
+                if(info.email != null) emailField.setText(info.email);
+            }
+            String pw = service.getPassword(memberId);
+            if (pw != null) currentPwField.setText(pw);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "데이터 로드 오류: " + ex.getMessage());
+        }
+
+        g.gridx = 0; g.gridy = 0; add(new JLabel("아이디"), g);
+        g.gridx = 1; g.gridy = 0; add(idField, g);
+
+        g.gridx = 0; g.gridy = 1; add(new JLabel("현재 비밀번호"), g);
+        JPanel pwP = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        pwP.add(currentPwField);
+        JButton changePwBtn = new JButton("비밀번호 변경");
+        changePwBtn.addActionListener(e -> {
+            PasswordChangeDialog pd = new PasswordChangeDialog(owner, service, memberId);
+            pd.setVisible(true);
+        });
+        pwP.add(changePwBtn);
+        g.gridx = 1; g.gridy = 1; add(pwP, g);
+
+        g.gridx = 0; g.gridy = 2; add(new JLabel("이름"), g);
+        g.gridx = 1; g.gridy = 2; add(nameField, g);
+
+        g.gridx = 0; g.gridy = 3; add(new JLabel("연락처"), g);
+        g.gridx = 1; g.gridy = 3; add(phoneField, g);
+
+        g.gridx = 0; g.gridy = 4; add(new JLabel("이메일"), g);
+        g.gridx = 1; g.gridy = 4; add(emailField, g);
+
+        g.gridx = 0; g.gridy = 5; add(new JLabel("주소"), g);
+        g.gridx = 1; g.gridy = 5; add(addressField, g);
+
+        JPanel btnP = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton cancel = new JButton("취소");
+        JButton save = new JButton("저장");
+        btnP.add(cancel);
+        btnP.add(save);
+        g.gridx = 0; g.gridy = 6; g.gridwidth = 2; add(btnP, g);
+
+        cancel.addActionListener(e -> dispose());
+
+        save.addActionListener(e -> {
+            String newName = nameField.getText().trim();
+            String newPhone = phoneField.getText().trim();
+            String newEmail = emailField.getText().trim();
+            String newAddr = addressField.getText().trim();
+
+            // 입력 검증
+            if (newName.isEmpty() || newPhone.isEmpty() || newAddr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "이름, 연락처, 주소는 필수 입력입니다.", "입력 필요", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 전화번호 형식 검증
+            if (!Utils.isValidPhone(newPhone)) {
+                JOptionPane.showMessageDialog(this, "유효한 전화번호를 입력하세요.", "전화번호 형식 오류", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 이메일 형식 검증
+            if (!Utils.isValidEmail(newEmail)) {
+                JOptionPane.showMessageDialog(this, "유효한 이메일 형식을 입력하세요.", "이메일 형식 오류", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 이메일 도메인 허용 체크
+            if (!Utils.isAllowedEmailDomain(newEmail)) {
+                JOptionPane.showMessageDialog(this, "사용 가능한 이메일 도메인은 naver.com, google.com, daum.net 입니다.", "이메일 도메인 오류", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(this, "정말 수정하시겠습니까?", "확인", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            try {
+                boolean ok = service.updateMemberInfo(memberId, newName, newPhone, newAddr, newEmail);
+                if (ok) {
+                    JOptionPane.showMessageDialog(this, "정보가 수정되었습니다.", "완료", JOptionPane.INFORMATION_MESSAGE);
+                    saved = true;
+                    dispose(); // 해당 프레임 종료(나머지 프레임 살아있음)
+                } else {
+                    // 수정 실패 시
+                    JOptionPane.showMessageDialog(this, "수정 실패", "오류", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                // DB 쿼리 수행 중 에러 발생 시
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "DB 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        pack();
+        setMinimumSize(new Dimension(400, 350)); // 최소 크기 지정
+        setLocationRelativeTo(owner);
+    }
+
+    public boolean isSaved() {
+        return saved;
+    }
+}

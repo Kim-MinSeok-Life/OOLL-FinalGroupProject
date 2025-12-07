@@ -9,8 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import OOLL_P_Manager.*;
-// import OOLL_P_Student.*; // 현재 주석 처리됨
-// import OOLL_P_Teacher.*; // 현재 주석 처리됨
+import OOLL_P_Student.*; // 현재 주석 처리됨
+import OOLL_P_Teacher.*; // 현재 주석 처리됨
 
 public class Login extends JFrame {
 
@@ -122,7 +122,7 @@ public class Login extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 setVisible(false);
-                 new FindIdPage().setVisible(true);
+                new FindIdPage().setVisible(true);
             }
         });
 
@@ -215,10 +215,10 @@ public class Login extends JFrame {
                         new ManagerMainFrame(id).setVisible(true);
                         break;
                     case "강사":
-                        // new TeacherMain(id).setVisible(true);
+                        new TeacherMain(id).setVisible(true);
                         break;
                     case "학생":
-                        // new StudentFrame(id).setVisible(true);
+                        new StudentFrame(id).setVisible(true);
                         break;
                 }
 
